@@ -5,13 +5,12 @@ import numpy as np
 import time
 import argparse
 import math
+import random
 import os
 import sys
-import random
 
 
 UR5_JOINT_INDICES = [0, 1, 2]
-
 
 def set_joint_positions(body, joints, values):
     assert len(joints) == len(values)
@@ -28,387 +27,212 @@ def draw_sphere_marker(position, radius, color):
 def remove_marker(marker_id):
    p.removeBody(marker_id)
 
-
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--birrt', action='store_true', default=False)
-    parser.add_argument('--smoothing', action='store_true', default=False)
-    args = parser.parse_args()
-    return args
-
-#your implementation starts here
-#refer to the handout about what the these functions do and their return type
-###############################################################################
 class RRT_Node:
     def __init__(self, conf):
         self.conf = conf
-        self.children = []
-        self.parent = None
+        self.child = []
 
     def set_parent(self, parent):
         self.parent = parent
 
     def add_child(self, child):
-        self.children.append(child)
+        self.child.append(child)
 
-# Sample in a way that it lets you reach to the goal node.
+    def set_cost(self, cost):
+        self.cost = cost
 
-
-# this function should return a robot conf uniformly sampled from the robot’s 
-# joint limits along with a boolean flag indicating whether the sampled conf 
-# is goal conf
 def sample_conf():
-
-    # randomly sample 3 joints
-    rand_joint_1 = np.random.uniform(2*-np.pi, 2*np.pi, 1)
-    rand_joint_2 = np.random.uniform(2*-np.pi, 2*np.pi, 1)
-    rand_joint_3 = np.random.uniform(-np.pi, np.pi, 1)
-    
-    # Random configuration
-    rand_conf = [*rand_joint_1, *rand_joint_2, *rand_joint_3]
-
-
-    # check if rand conf is goal
-    is_goal = np.linalg.norm(np.array(rand_conf) - np.array(goal_conf)) < 0.3
-
-    rand_node = RRT_Node(rand_conf)
-    #print(rand_node)
-    return rand_node, is_goal
-
-# return the nearest node of rand node from the
-# node list, node list should contain all nodes 
-# in the current RRT Tree
-def find_nearest(rand_node, node_list):
-    dist = float('inf')
-    for node in node_list:
-        curr_dist = np.linalg.norm(np.array(rand_node.conf) - np.array(node.conf))
-        if curr_dist < dist:
-            dist = curr_dist
-            nearest_node = node
-    return nearest_node
-
-# check if there is a collision path between the two
-# input nodes. Collision checking needs to be performed
-# on each interpolated middle node between the two inputs. 
-# Use a step size of 0.05 as that is what we used in the
-# grading system        
-def steer_to(nearest_node, rand_node):
-    # interpolate between two nodes with a step size of 0.05
-    step_size = 0.05
-    
-    # interpolate between node configurations
-    direction_vector = np.array(rand_node.conf) - np.array(nearest_node.conf)
-
-    #print(direction_vector)
-    # calculate number of steps to reach target
-    numsteps = int(np.linalg.norm(direction_vector) / step_size)
-    
-    #print(np.array(increase_by.shape()))
-    step = direction_vector / numsteps
-    #print("Step:" , step)
-    old_conf = np.array(nearest_node.conf)
-
-    for _ in range(numsteps):
-        # Generating intermediate configurations
-        new_conf = old_conf + step
-        #print(new_conf)
-        # check for collision in this configuration
-        if (collision_fn(new_conf)):
-            return False
-        # else:
-        #     set_joint_positions(ur5, UR5_JOINT_INDICES, nearest_node.conf)
-        #     nearest_state = p.getLinkState(ur5, 3)[0]
-
-        #     set_joint_positions(ur5, UR5_JOINT_INDICES, new_conf)
-        #     new_state = p.getLinkState(ur5, 3)[0]
-        #     p.addUserDebugLine(nearest_state, new_state, [0,0,1], 1.0)
-
-        old_conf = new_conf
-
-    
-    return True
-
-def steer_to_get_path(conf1, conf2):
-    intermediate_steps = []
-    step_size = 0.05
-    direction = np.subtract(conf2, conf1)
-    numsteps = int(np.linalg.norm(direction) / step_size)
-    step = direction / numsteps
-    curr = conf1
-    for _ in range(numsteps):
-        intermediate_steps.append(curr)
-        curr = curr + step
-    return intermediate_steps
-
-def steer_to_until(rand_node, nearest_node):
-     # interpolate between two nodes with a step size of 0.05
-    step_size = 0.05
-    
-    # interpolate between node configurations
-    direction_vector = np.array(rand_node.conf) - np.array(nearest_node.conf)
-
-    #print(direction_vector)
-    # calculate number of steps to reach target
-    numsteps = int(np.linalg.norm(direction_vector) / step_size)
-    
-    #print(np.array(increase_by.shape()))
-    step = direction_vector / numsteps
-    #print("Step:" , step)
-    old_conf = np.array(nearest_node.conf)
-
-    for _ in range(numsteps):
-        # Generating intermediate configurations
-        new_conf = old_conf + step
-        #print(new_conf)
-        # check for collision in this configuration
-        if (collision_fn(new_conf)):
-            return old_conf
-        # else:
-        #     set_joint_positions(ur5, UR5_JOINT_INDICES, nearest_node.conf)
-        #     nearest_state = p.getLinkState(ur5, 3)[0]
-
-        #     set_joint_positions(ur5, UR5_JOINT_INDICES, new_conf)
-        #     new_state = p.getLinkState(ur5, 3)[0]
-        #     p.addUserDebugLine(nearest_state, new_state, [0,0,1], 1.0)
-
-        old_conf = new_conf
-
-    
-    return old_conf
-
-    
-    pass
-
-def distance_func(conf1, conf2):
-    return math.sqrt( ((conf2[0] - conf1[0]) ** 2) + ((conf2[1] - conf1[1]) ** 2) + ((conf2[2] - conf1[2]) ** 2))
-# the main function that performs the RRT algorithm. 
-# This function should return an ordered list of robot 
-# confs that moves the robot arm from the start position
-# to the goal position.
-def RRT():
-    ###############################################
-    # TODO your code to implement the rrt algorithm
-    ###############################################
-    
-    # initialize our tree with start node
-    start_node = RRT_Node(start_conf)
-    node_list = []
-    node_list.append(start_node)
-    
-    
-    while True:
-        # sampling a random configuration 
-        # and get the config only
-        rand_node, is_goal = sample_conf()
-        # if is_goal:
-        #     print("Yes 2")
-        # find nearest node in the tree to the rand_node
-        nearest_node = find_nearest(rand_node, node_list)
-
-        # Extend the tree towards the node if no collisions
-        # found
-        flag = steer_to(rand_node, nearest_node)
-        #print(new_node)
+    if random.randint(0, 100) > 90: #Goal config 10% of the time
+        return goal_conf, 1 #Goal
+    else:
+        sample_joint1 = np.random.uniform(-2*math.pi,2*math.pi)
+        sample_joint2 = np.random.uniform(-2*math.pi,2*math.pi)
+        sample_joint3 = np.random.uniform(-math.pi,math.pi)
         
-        if flag is True:
-            # add the node to the list
-            node_list.append(rand_node)
+        rand_conf = (sample_joint1, sample_joint2, sample_joint3)    
+        return rand_conf, 0 #Random
+   
+def find_nearest(rand_node, node_list):
+    q_nearest = node_list[0]
+    for i in node_list:
+        if (math.dist(i.conf, rand_node.conf) < math.dist(q_nearest.conf, rand_node.conf)):
+            q_nearest = i
+    
+    return q_nearest
 
-            # setting the parent
-            rand_node.set_parent(nearest_node)
-            
-            # adding new node to the children list
-            nearest_node.add_child(rand_node)
+def steer_to(rand_node, nearest_node): 
+    collision_flag = 0
+    step_size = 0.05
+    
+    diff = np.array(rand_node.conf) - np.array(nearest_node.conf)
+    cost = np.norm(diff)
+    num_step = abs(math.ceil(math.dist(rand_node.conf, nearest_node.conf) / step_size)) #divide distance by step size, round up
+    stepper = diff / np.linalg.norm(diff) * step_size
+    v = np.zeros([num_step+1, 3])
+    v[num_step, :] = rand_node.conf
+    
+    for i in range(0, num_step):
+        v[i,:] = nearest_node.conf + (stepper * i)
+    
+    for q in v:
+        if (collision_fn(q)): ### To be replaced with NN
+            collision_flag = 1 #There is collision
+            break
+    
+    return collision_flag, cost
 
-            # # change the flags
-            # goal_node = RRT_Node(goal_conf)
-            # flag2 = steer_to(rand_node, goal_node)
-            # print("Flag2: ", flag2)
-            # # see if goal is reachable from the random node to converge faster
-            # if flag2:
-            #     goal_node.set_parent(rand_node)
-            #     rand_node.add_child(goal_node)
-            #     is_goal = True
+def near(q_rand, T):
 
-            # check if the goal is reached
-            if is_goal:
-                # Reconstructing the path
-                path = []
-                #goal_node = RRT_Node(goal_conf)
-                node = rand_node
-                #print("New node: ", node.conf)
-                
+    # Use this value of gamma
+    GAMMA = 50
 
-                while node is not None:
-                    path.append(node.conf)
-                    node = node.parent
+    # your code here
+    v = len(T)
+    n = 3
+    Xnear = []
 
-                path.reverse()
-                #print("Path:", path)
-                #print(path)
-                #set_joint_positions(ur5, )
-                return path
+    radius = GAMMA * (math.log(abs(v)) / abs(v)) ** (1/n) #calculating radius
 
-# Returns a flag if a node from 1 tree
-# can be connected to a node from another tree       
-def connect(node, node_list):
-    nearest_node = find_nearest(node, node_list)
-    flag = steer_to(nearest_node, node)
-    return flag
+    for node in T:
+        if ((np.norm(np.array(node.conf)) - np.array(q_rand.conf)) <= radius):
+            Xnear.append(node) #Returns nodes within radius
 
-def BiRRT():
-    #################################################
-    # TODO your code to implement the birrt algorithm
-    #################################################
+    return Xnear
 
-    # need two trees
-    # 1st tree starts at start node
-    tree_a = []
-    start_node = RRT_Node(start_conf)
-    tree_a.append(start_node)
-    #print("Start node: ", start_node, "\n")
-    # 2nd tree starts at end node
-    tree_b = []
-    goal_node = RRT_Node(goal_conf)
-    tree_b.append(goal_node)
-    #print("Goal node: ", goal_node, "\n")
-    working_on_tree_a = True
-    while True:
-        if working_on_tree_a:
-            # generate a random node for tree a
-            rand_node_a, is_goal = sample_conf()
-            #print("random node: ", rand_node_a, "\n")
-
-            # Find the nearest node in tree a
-            nearest_node_a = find_nearest(rand_node_a, tree_a)
-
-            #print("Nearest node A: ", nearest_node_a, "\n")
-
-            # Can these two nodes be connected
-            flag_1 = steer_to(nearest_node_a, rand_node_a)
-
-            if flag_1:
-                # add the node to the tree
-                tree_a.append(rand_node_a)
-
-                # update the parent
-                rand_node_a.set_parent(nearest_node_a)
-
-                # add the child
-                nearest_node_a.add_child(rand_node_a)
-
-                # node nearest to list b
-                nearest_node_in_b = find_nearest(rand_node_a, tree_b)
-                #print("Nearest node in B: ", nearest_node_in_b, "\n")
-
-                # try to steer to that nearest node
-                flag_3 = steer_to(nearest_node_in_b, rand_node_a)
-                #print("flage 3: ", flag_3)
-                if flag_3:
-                    path_a = []
-
-                    node_a = rand_node_a
-                    while node_a is not None:
-                        path_a.append(node_a.conf)
-                        node_a = node_a.parent
-
-                    path_b = []
-                    node_b = nearest_node_in_b
-                    while node_b is not None:
-                        path_b.append(node_b.conf)
-                        node_b = node_b.parent
-
-                    path_a.reverse()
-                    path = path_a + path_b
-                    #print("path: ", path)
-                    return path        
-            working_on_tree_a = False
-
-        else:
-            # generate a random node for tree a
-            rand_node_b, is_goal = sample_conf()
-            #print("Random node B: ", rand_node_b, "\n")
-
-            # Find the nearest node in tree a
-            nearest_node_b = find_nearest(rand_node_b, tree_b)
-            #print("Nearest node B: ", nearest_node_b, "\n")
-
-            # Can these two nodes be connected
-            flag_2 = steer_to(nearest_node_b, rand_node_b)
-
-            if flag_2:
-                # add the node to the tree
-                tree_b.append(rand_node_b)
-
-                # update the parent
-                rand_node_b.set_parent(nearest_node_b)
-
-                # add the child
-                nearest_node_b.add_child(rand_node_b)
-
-                # node nearest to list a
-                nearest_node_in_a = find_nearest(rand_node_b, tree_a)
-                
-                # try to steer to that nearest node
-                flag_4 = steer_to(nearest_node_in_a, rand_node_b)
-               
-                if flag_4:
-                    path_a = []
-                    node_a = nearest_node_in_a
-                    while node_a is not None:
-                        path_a.append(node_a.conf)
-                        node_a = node_a.parent
-
-                    path_b = []
-                    node_b = rand_node_b
-                    while node_b is not None:
-                        path_b.append(node_b.conf)
-                        node_b = node_b.parent
-                    
-                    path_a.reverse()
-                    path = path_a + path_b
-                    #print("path: ", path)
-                    return path        
-
-            
-            working_on_tree_a = True
-
-def BiRRT_smoothing():
-    ################################################################
-    # TODO your code to implement the birrt algorithm with smoothing
-    ################################################################
-    path = BiRRT()
-    #print("initial path: ", path)
-    N = 100
-
-    for _ in range(N):
-        m, n = None, None
-        while m == n:
-            m = np.random.randint(0, len(path))
-            n = np.random.randint(0, len(path))
-
-        m_node = RRT_Node(path[m])
-        n_node = RRT_Node(path[n])
-        if m < n:
-            flag = steer_to(m_node, n_node)
-            if flag:      
-                path = path[:m+1] + path[n:]
-        else:
-            flag = steer_to(n_node, m_node)
+def choose_parent(rand, Xnear):
+        if len(Xnear) == 0: #No nodes nearby
+            return None
+        
+        min_node = None
+        cost_list = []
+        ind_list = []
+        for node in Xnear:
+            flag, new_to_near_cost = steer_to(rand, node) #first check if you can steer to rand node
             if flag:
-                path = path[:n+1] + path[m:]
+                cost_list.append(node.cost + new_to_near_cost) #cost of current node + cost of newNode to current node
+                ind_list.append(node) #index of node corresponding to cost calculated in line above
 
-    return path
+        if len(cost_list) == 0:
+            return None #No collision free paths found
 
-def get_position_from_conf(conf):
-    set_joint_positions(ur5, UR5_JOINT_INDICES, conf)
-    return p.getLinkState(ur5, p.getNumJoints(ur5) - 1)[:2][0]
+        min_node = ind_list[cost_list.index(min(cost_list))]
+    
+        return min_node
+
+def rewire(Xnear, new_node):
+    if Xnear == None:
+        return
+    for node in Xnear:
+        current_cost = node.cost
+        flag, new_cost = steer_to(new_node, node)
+
+        if flag != 1:
+            new_cost += new_node.cost
+            if new_cost < current_cost:
+                node.parent = new_node
+                node.cost = new_cost
+                new_node.add_child(node)
+                #Update decendants cost
+                
+
+    return
+
+
+#Self-Made Fucntion for testing ###################
+def path_smoothing(path_conf):
+    step_size = 0.05
+    path_conf_stepped = []
+    for i in range(1, len(path_conf)):
+        path_conf_stepped.append(path_conf[i-1])
+        diff = np.array(path_conf[i]) - np.array(path_conf[i-1])
+        num_step = abs(math.ceil(math.dist(path_conf[i], path_conf[i-1]) / step_size)) #divide distance by step size, round up
+        stepper = diff / np.linalg.norm(diff) * step_size
+    
+        for j in range(0, num_step):
+            path_conf_stepped.append(path_conf[i-1] + (stepper * j))
+    path_conf_stepped.append(path_conf[len(path_conf)-1])
+    return path_conf_stepped 
+####################################################
+
+def RRT_star():
+    #Implement full RRT Star algorithm
+    max_iterations = 3000
+    count = 0
+    num_iterations = 1
+    goal_node = RRT_Node(goal_conf)
+    
+    #Initialize Tree
+    T = []
+    T.append(RRT_Node(start_conf))
+    T[0].cost = 0 #Start goal
+
+    for i in range(1, max_iterations):
+        num_iterations += 1
+        #Sample Configuration
+        q_rand, goal_flag = sample_conf() #generate random configuration
+        q_rand = RRT_Node(q_rand) #make it a node
+        
+        #Find Nearest Node to Random Node
+        q_nearest = find_nearest(q_rand, T) #find nearest node to random node
+        
+        #Collision Free Path?
+        collision_flag, cost = steer_to(q_rand, q_nearest)
+        q_rand.cost = cost
+
+        #If path is valid
+        if (collision_flag != 1):
+            count += 1
+            
+            #Find near parents
+            Xnear = near(q_rand, T)
+            min_parent = choose_parent(q_rand, Xnear)
+            if min_parent is not None:
+                q_rand.parent = min_parent
+                q_rand.cost = min_parent.cost + np.norm(np.array(q_rand.conf) - np.array(min_parent.conf))
+                min_parent.add_child(q_rand)
+            else:
+                q_rand.parent = q_nearest
+                q_rand.cost = q_nearest.cost + cost
+                q_nearest.add_child(q_rand)
+            
+            #Add to tree
+            T.append(q_rand)
+            
+            #Rewire Tree
+
+
+        else: #no path from rand node to nearest node
+            goal_flag = 0
+        if(goal_flag):
+            if steer_to(q_rand, goal_node) != 1:
+                T.append(goal_node)
+                goal_node.parent = q_rand
+                break
+            else: #no path from rand_node to goal node (rand node is still added to tree with nearest node)
+                goal_flag = 0
+    
+    if (num_iterations == max_iterations):
+        path_conf = []
+        return None
+    
+    #Creating Path Config
+    path_conf = []
+    q_path = T[len(T)-1]
+
+    while (q_path.conf != T[0].conf):
+        path_conf.append(q_path.conf)
+        q_path = q_path.parent
+    path_conf.append(T[0].conf)
+    path_conf.reverse()
+    # print("Number of iterations (RRT):")
+    # print(num_iterations)
+    path_conf = path_smoothing(path_conf)
+    return path_conf
+
 ###############################################################################
 #your implementation ends here
 
 if __name__ == "__main__":
-    args = get_args()
-
     # set up simulator
     physicsClient = p.connect(p.GUI)
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -432,13 +256,13 @@ if __name__ == "__main__":
     # start and goal
     start_conf = (-0.813358794499552, -0.37120422397572495, -0.754454729356351)
     start_position = (0.3998897969722748, -0.3993956744670868, 0.6173484325408936)
-    goal_conf = (0.7527214782907734, -0.6521867735052328, -0.4949270744967443)
+    goal_conf =  (0.7527214782907734, -0.6521867735052328, -0.4949270744967443)
     goal_position = (0.35317009687423706, 0.35294029116630554, 0.7246701717376709)
     goal_marker = draw_sphere_marker(position=goal_position, radius=0.02, color=[1, 0, 0, 1])
     set_joint_positions(ur5, UR5_JOINT_INDICES, start_conf)
 
     
-	# place holder to save the solution path
+		# place holder to save the solution path
     path_conf = None
 
     # get the collision checking function
@@ -447,39 +271,16 @@ if __name__ == "__main__":
                                        attachments=[], self_collisions=True,
                                        disabled_collisions=set())
 
-    if args.birrt:
-        if args.smoothing:
-            # using birrt with smoothing
-            #print("Here")
-            path_conf = BiRRT_smoothing()
-            #print("After smoothing: ", path_conf)
-        else:
-            # using birrt without smoothing
-            path_conf = BiRRT()
-            #print("After BiRRT: ", path_conf)
-    else:
-        # using rrt
-        path_conf = RRT()
-        #print(path_conf)
-        #set_joint_positions
+    path_conf = RRT_star()
 
     if path_conf is None:
         # pause here
         input("no collision-free path is found within the time budget, finish?")
     else:
+
         # execute the path
         while True:
-            q_prev = None
             for q in path_conf:
                 set_joint_positions(ur5, UR5_JOINT_INDICES, q)
-                print(p.getLinkState(ur5, p.getNumJoints(ur5)-1)[:2][0])
-                draw_sphere_marker(position=p.getLinkState(ur5, p.getNumJoints(ur5)-1)[:2][0], radius=0.01,
-                                   color=[0,1,0,1])
-                
-                if q_prev is not None:
-                    draw_path = steer_to_get_path(q_prev, q)
-                    for q_small in draw_path:
-                        draw_sphere_marker(position=get_position_from_conf(q_small), radius=0.005, color=[1,1,0,0.5])
-                q_prev = q
-                time.sleep(0.5)
-            
+                time.sleep(.051)
+            time.sleep(0.5)
