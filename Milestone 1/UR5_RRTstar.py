@@ -65,7 +65,7 @@ def steer_to(rand_node, nearest_node):
     step_size = 0.05
     
     diff = np.array(rand_node.conf) - np.array(nearest_node.conf)
-    cost = np.norm(diff)
+    cost = np.linalg.norm(diff)
     num_step = abs(math.ceil(math.dist(rand_node.conf, nearest_node.conf) / step_size)) #divide distance by step size, round up
     stepper = diff / np.linalg.norm(diff) * step_size
     v = np.zeros([num_step+1, 3])
@@ -94,7 +94,7 @@ def near(q_rand, T):
     radius = GAMMA * (math.log(abs(v)) / abs(v)) ** (1/n) #calculating radius
 
     for node in T:
-        if ((np.norm(np.array(node.conf)) - np.array(q_rand.conf)) <= radius):
+        if ((np.linalg.norm(np.array(node.conf)) - np.array(q_rand.conf)) <= radius):
             Xnear.append(node) #Returns nodes within radius
 
     return Xnear
@@ -188,7 +188,7 @@ def RRT_star():
             min_parent = choose_parent(q_rand, Xnear)
             if min_parent is not None:
                 q_rand.parent = min_parent
-                q_rand.cost = min_parent.cost + np.norm(np.array(q_rand.conf) - np.array(min_parent.conf))
+                q_rand.cost = min_parent.cost + np.linalg.norm(np.array(q_rand.conf) - np.array(min_parent.conf))
                 min_parent.add_child(q_rand)
             else:
                 q_rand.parent = q_nearest
