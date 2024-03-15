@@ -265,7 +265,7 @@ if __name__ == "__main__":
     set_joint_positions(ur5, UR5_JOINT_INDICES, start_conf)
 
     
-		# place holder to save the solution path
+	# place holder to save the solution path
     path_conf = None
 
     # get the collision checking function
