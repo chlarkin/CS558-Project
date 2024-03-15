@@ -76,6 +76,7 @@ def steer_to(rand_node, nearest_node):
     
     for q in v:
         if (collision_fn(q)): ### To be replaced with NN
+            print("here")
             collision_flag = 1 #There is collision
             break
     
@@ -94,7 +95,9 @@ def near(q_rand, T):
     radius = GAMMA * (math.log(abs(v)) / abs(v)) ** (1/n) #calculating radius
 
     for node in T:
-        if ((np.linalg.norm(np.array(node.conf)) - np.array(q_rand.conf)) <= radius):
+        norm_node = np.linalg.norm(np.array(node.conf))
+        norm_q_rand = np.linalg.norm(np.array(q_rand.conf))
+        if ((norm_node - norm_q_rand)<= radius):
             Xnear.append(node) #Returns nodes within radius
 
     return Xnear
