@@ -60,6 +60,18 @@ def find_nearest(rand_node, node_list):
     
     return q_nearest
 
+def steer_to_get_path(conf1, conf2):
+    intermediate_steps = []
+    step_size = 0.05
+    direction = np.subtract(conf2, conf1)
+    numsteps = int(np.linalg.norm(direction) / step_size)
+    step = direction / numsteps
+    curr = conf1
+    for _ in range(numsteps):
+        intermediate_steps.append(curr)
+        curr = curr + step
+    return intermediate_steps
+
 def steer_to(rand_node, nearest_node): 
     collision_flag = 0
     step_size = 0.05
@@ -232,6 +244,9 @@ def RRT_star():
     path_conf = path_smoothing(path_conf)
     return path_conf
 
+def get_position_from_conf(conf):
+    set_joint_positions(ur5, UR5_JOINT_INDICES, conf)
+    return p.getLinkState(ur5, p.getNumJoints(ur5) - 1)[:2][0]
 ###############################################################################
 #your implementation ends here
 
@@ -287,3 +302,17 @@ if __name__ == "__main__":
                 set_joint_positions(ur5, UR5_JOINT_INDICES, q)
                 time.sleep(.051)
             time.sleep(0.5)
+        # while True:
+        #     q_prev = None
+        #     for q in path_conf:
+        #         set_joint_positions(ur5, UR5_JOINT_INDICES, q)
+        #         print(p.getLinkState(ur5, p.getNumJoints(ur5)-1)[:2][0])
+        #         draw_sphere_marker(position=p.getLinkState(ur5, p.getNumJoints(ur5)-1)[:2][0], radius=0.01,
+        #                            color=[0,1,0,1])
+                
+        #         if q_prev is not None:
+        #             draw_path = steer_to_get_path(q_prev, q)
+        #             for q_small in draw_path:
+        #                 draw_sphere_marker(position=get_position_from_conf(q_small), radius=0.005, color=[1,1,0,0.5])
+        #         q_prev = q
+        #         time.sleep(0.5)
