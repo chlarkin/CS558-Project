@@ -42,15 +42,15 @@ class RRT_Node:
         self.cost = cost
 
 def sample_conf():
-    if random.randint(0, 100) > 90: #Goal config 10% of the time
-        return goal_conf, 1 #Goal
+    if random.randint(0, 100) > 95: #Goal config 5% of the time
+        return goal_conf #Goal
     else:
         sample_joint1 = np.random.uniform(-2*math.pi,2*math.pi)
         sample_joint2 = np.random.uniform(-2*math.pi,2*math.pi)
         sample_joint3 = np.random.uniform(-math.pi,math.pi)
         
         rand_conf = (sample_joint1, sample_joint2, sample_joint3)    
-        return rand_conf, 0 #Random
+        return rand_conf #Random
    
 def find_nearest(rand_node, node_list):
     q_nearest = node_list[0]
@@ -60,17 +60,17 @@ def find_nearest(rand_node, node_list):
     
     return q_nearest
 
-def steer_to_get_path(conf1, conf2):
-    intermediate_steps = []
-    step_size = 0.05
-    direction = np.subtract(conf2, conf1)
-    numsteps = int(np.linalg.norm(direction) / step_size)
-    step = direction / numsteps
-    curr = conf1
-    for _ in range(numsteps):
-        intermediate_steps.append(curr)
-        curr = curr + step
-    return intermediate_steps
+# def steer_to_get_path(conf1, conf2):
+#     intermediate_steps = []
+#     step_size = 0.05
+#     direction = np.subtract(conf2, conf1)
+#     numsteps = int(np.linalg.norm(direction) / step_size)
+#     step = direction / numsteps
+#     curr = conf1
+#     for _ in range(numsteps):
+#         intermediate_steps.append(curr)
+#         curr = curr + step
+#     return intermediate_steps
 
 def steer_to(rand_node, nearest_node): 
     collision_flag = 0
@@ -88,7 +88,6 @@ def steer_to(rand_node, nearest_node):
     
     for q in v:
         if (collision_fn(q)): ### To be replaced with NN
-            print("here")
             collision_flag = 1 #There is collision
             break
     
@@ -110,9 +109,9 @@ def near(q_rand, T):
         norm_node = np.linalg.norm(np.array(node.conf))
         norm_q_rand = np.linalg.norm(np.array(q_rand.conf))
         if ((norm_node - norm_q_rand)<= radius):
-            Xnear.append(node) #Returns nodes within radius
+            Xnear.append(node) 
 
-    return Xnear
+    return Xnear #Returns nodes within radius
 
 def choose_parent(rand, Xnear):
         if len(Xnear) == 0: #No nodes nearby
@@ -123,7 +122,7 @@ def choose_parent(rand, Xnear):
         ind_list = []
         for node in Xnear:
             flag, new_to_near_cost = steer_to(rand, node) #first check if you can steer to rand node
-            if flag:
+            if flag != 1:
                 cost_list.append(node.cost + new_to_near_cost) #cost of current node + cost of newNode to current node
                 ind_list.append(node) #index of node corresponding to cost calculated in line above
 
@@ -134,22 +133,76 @@ def choose_parent(rand, Xnear):
     
         return min_node
 
-def rewire(Xnear, new_node):
-    if Xnear == None:
+def rewire(Xnear, rand_node):
+    if len(Xnear) == 0:
         return
     for node in Xnear:
         current_cost = node.cost
-        flag, new_cost = steer_to(new_node, node)
+        flag, new_cost = steer_to(rand_node, node)
 
         if flag != 1:
-            new_cost += new_node.cost
+            new_cost += rand_node.cost
             if new_cost < current_cost:
-                node.parent = new_node
+                node.parent = rand_node
                 node.cost = new_cost
-                new_node.add_child(node)
-                #Update decendants cost
+                if rand_node.conf != goal_conf:
+                    rand_node.add_child(node)
+                if rand_node in node.child:
+                    node.child.remove(rand_node)
+                tree_traversal(node)
                 
 
+    return
+
+def tree_traversal(node):
+    #Updates cost of all decendants of a given node
+    empty = []
+    # list = []
+    if node.child == empty:
+        return
+    
+    # print("init")
+    # print(node.conf)
+    # print(node.child[0].conf)
+    # print("end init")
+
+    current_node = node.child[0]
+    # list.append(current_node)
+    current_node.cost = current_node.parent.cost + np.linalg.norm(np.array(current_node.parent.conf) - np.array(current_node.conf))
+    level = 1
+    while current_node != node:
+        print(level)
+        #Move down
+        if current_node.child != empty:
+            # print("down")
+            # print(current_node.conf)
+            # print(current_node.child)
+            # print(current_node.child[0].conf)
+            level += 1
+            current_node = current_node.child[0]
+            current_node.cost = current_node.parent.cost + np.linalg.norm(np.array(current_node.parent.conf) - np.array(current_node.conf))
+            # list.append(current_node)
+
+        #Move right
+        elif current_node.parent.child.index(current_node) + 1 < len(current_node.parent.child):
+            # print("right")
+            current_node = current_node.parent.child[current_node.parent.child.index(current_node) + 1]
+            current_node.cost = current_node.parent.cost + np.linalg.norm(np.array(current_node.parent.conf) - np.array(current_node.conf))
+            # list.append(current_node)
+        
+        #Move up and right or until node
+        else: 
+            while (current_node.parent.child.index(current_node) + 1 >= len(current_node.parent.child)) and (current_node.conf != node.conf):
+                current_node = current_node.parent
+                level -= 1
+                # print("up")
+            if current_node.conf == node.conf:
+                pass #end loop when it reaches while
+            else:
+                # print("right (up)")
+                current_node = current_node.parent.child[current_node.parent.child.index(current_node) + 1]
+                current_node.cost = current_node.parent.cost + np.linalg.norm(np.array(current_node.parent.conf) - np.array(current_node.conf))
+                # list.append(current_node)
     return
 
 
@@ -171,9 +224,8 @@ def path_smoothing(path_conf):
 
 def RRT_star():
     #Implement full RRT Star algorithm
-    max_iterations = 3000
-    count = 0
-    num_iterations = 1
+    max_iterations = 1000
+    num_iterations = 0
     goal_node = RRT_Node(goal_conf)
     
     #Initialize Tree
@@ -184,23 +236,26 @@ def RRT_star():
     for i in range(1, max_iterations):
         num_iterations += 1
         #Sample Configuration
-        q_rand, goal_flag = sample_conf() #generate random configuration
+        q_rand = sample_conf() #generate random configuration
         q_rand = RRT_Node(q_rand) #make it a node
+        if q_rand.conf == goal_node.conf:
+            q_rand = goal_node #This is for checking if goal node is in T later
+        
         
         #Find Nearest Node to Random Node
         q_nearest = find_nearest(q_rand, T) #find nearest node to random node
         
         #Collision Free Path?
         collision_flag, cost = steer_to(q_rand, q_nearest)
-        q_rand.cost = cost
+        
 
         #If path is valid
         if (collision_flag != 1):
-            count += 1
             
             #Find near parents
-            Xnear = near(q_rand, T)
+            Xnear = near(q_rand, T) #nodes within radius
             min_parent = choose_parent(q_rand, Xnear)
+            
             if min_parent is not None:
                 q_rand.parent = min_parent
                 q_rand.cost = min_parent.cost + np.linalg.norm(np.array(q_rand.conf) - np.array(min_parent.conf))
@@ -210,30 +265,33 @@ def RRT_star():
                 q_rand.cost = q_nearest.cost + cost
                 q_nearest.add_child(q_rand)
             
-            #Add to tree
-            T.append(q_rand)
+            #Add to tree if not already in tree
+            if q_rand in T:
+                pass
+            else:
+                T.append(q_rand)
+                print(num_iterations)
+                if q_rand.conf == goal_conf:
+                    print("goal in tree")
             
             #Rewire Tree
+            rewire(Xnear, q_rand)
 
+        # else: #no path from rand node to nearest node
+        #     goal_flag = 0
 
-        else: #no path from rand node to nearest node
-            goal_flag = 0
-        if(goal_flag):
-            if steer_to(q_rand, goal_node) != 1:
-                T.append(goal_node)
-                goal_node.parent = q_rand
-                break
-            else: #no path from rand_node to goal node (rand node is still added to tree with nearest node)
-                goal_flag = 0
-    
-    if (num_iterations == max_iterations):
+    if goal_node in T:
+        pass
+    else:
+        print(f"Goal not found in {max_iterations} iterations")
         path_conf = []
         return None
     
     #Creating Path Config
     path_conf = []
-    q_path = T[len(T)-1]
+    q_path = goal_node
 
+    this becomes infinite loop for some reason
     while (q_path.conf != T[0].conf):
         path_conf.append(q_path.conf)
         q_path = q_path.parent
@@ -241,12 +299,13 @@ def RRT_star():
     path_conf.reverse()
     # print("Number of iterations (RRT):")
     # print(num_iterations)
+    print(path_conf)
     path_conf = path_smoothing(path_conf)
     return path_conf
 
-def get_position_from_conf(conf):
-    set_joint_positions(ur5, UR5_JOINT_INDICES, conf)
-    return p.getLinkState(ur5, p.getNumJoints(ur5) - 1)[:2][0]
+# def get_position_from_conf(conf):
+#     set_joint_positions(ur5, UR5_JOINT_INDICES, conf)
+#     return p.getLinkState(ur5, p.getNumJoints(ur5) - 1)[:2][0]
 ###############################################################################
 #your implementation ends here
 
