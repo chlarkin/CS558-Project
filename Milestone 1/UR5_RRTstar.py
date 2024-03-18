@@ -329,7 +329,7 @@ if __name__ == "__main__":
                            basePosition=[2/4, 0, 2/3],
                            useFixedBase=True)
     obstacles = [plane, obstacle1, obstacle2]
-
+    
     # start and goal
     start_conf = (-0.813358794499552, -0.37120422397572495, -0.754454729356351)
     start_position = (0.3998897969722748, -0.3993956744670868, 0.6173484325408936)
