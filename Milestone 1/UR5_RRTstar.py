@@ -27,6 +27,28 @@ def draw_sphere_marker(position, radius, color):
 def remove_marker(marker_id):
    p.removeBody(marker_id)
 
+#Self-Made Fucntion for testing ###################
+def path_smoothing(path_conf):
+    step_size = 0.05
+    path_conf_stepped = []
+    for i in range(1, len(path_conf)):
+        path_conf_stepped.append(path_conf[i-1])
+        diff = np.array(path_conf[i]) - np.array(path_conf[i-1])
+        num_step = abs(math.ceil(math.dist(path_conf[i], path_conf[i-1]) / step_size)) #divide distance by step size, round up
+        stepper = diff / np.linalg.norm(diff) * step_size
+    
+        for j in range(0, num_step):
+            path_conf_stepped.append(path_conf[i-1] + (stepper * j))
+    path_conf_stepped.append(path_conf[len(path_conf)-1])
+    return path_conf_stepped 
+####################################################
+
+class run_time:
+    def __init__(self, t):
+        self.t = t
+    def add_t(self, t):
+        self.t += t
+
 class RRT_Node:
     def __init__(self, conf):
         self.conf = conf
@@ -60,26 +82,16 @@ def find_nearest(rand_node, node_list):
     
     return q_nearest
 
-# def steer_to_get_path(conf1, conf2):
-#     intermediate_steps = []
-#     step_size = 0.05
-#     direction = np.subtract(conf2, conf1)
-#     numsteps = int(np.linalg.norm(direction) / step_size)
-#     step = direction / numsteps
-#     curr = conf1
-#     for _ in range(numsteps):
-#         intermediate_steps.append(curr)
-#         curr = curr + step
-#     return intermediate_steps
-
-def steer_to(rand_node, nearest_node): 
+def steer_to(rand_node, nearest_node, collision_runtime): 
     collision_flag = 0
     step_size = 0.05
-    
+   
     diff = np.array(rand_node.conf) - np.array(nearest_node.conf)
     cost = np.linalg.norm(diff)
+    if cost == 0:
+        return 0, cost
     num_step = abs(math.ceil(math.dist(rand_node.conf, nearest_node.conf) / step_size)) #divide distance by step size, round up
-    stepper = diff / np.linalg.norm(diff) * step_size
+    stepper = diff / cost * step_size
     v = np.zeros([num_step+1, 3])
     v[num_step, :] = rand_node.conf
     
@@ -87,9 +99,15 @@ def steer_to(rand_node, nearest_node):
         v[i,:] = nearest_node.conf + (stepper * i)
     
     for q in v:
+        starttime = time.time()
         if (collision_fn(q)): ### To be replaced with NN
+            endtime = time.time()
+            collision_runtime.add_t(endtime-starttime)
+            
             collision_flag = 1 #There is collision
             break
+        endtime = time.time()
+        collision_runtime.add_t(endtime-starttime)
     
     return collision_flag, cost
 
@@ -113,7 +131,7 @@ def near(q_rand, T):
 
     return Xnear #Returns nodes within radius
 
-def choose_parent(rand, Xnear):
+def choose_parent(rand, Xnear, collision_runtime):
         if len(Xnear) == 0: #No nodes nearby
             return None
         
@@ -121,7 +139,7 @@ def choose_parent(rand, Xnear):
         cost_list = []
         ind_list = []
         for node in Xnear:
-            flag, new_to_near_cost = steer_to(rand, node) #first check if you can steer to rand node
+            flag, new_to_near_cost = steer_to(rand, node, collision_runtime) #first check if you can steer to rand node
             if flag != 1:
                 cost_list.append(node.cost + new_to_near_cost) #cost of current node + cost of newNode to current node
                 ind_list.append(node) #index of node corresponding to cost calculated in line above
@@ -133,12 +151,12 @@ def choose_parent(rand, Xnear):
     
         return min_node
 
-def rewire(Xnear, rand_node):
+def rewire(Xnear, rand_node, collision_runtime):
     if len(Xnear) == 0:
         return
     for node in Xnear:
         current_cost = node.cost
-        flag, new_cost = steer_to(rand_node, node)
+        flag, new_cost = steer_to(rand_node, node, collision_runtime)
 
         if flag != 1:
             new_cost += rand_node.cost
@@ -165,7 +183,8 @@ def tree_traversal(node):
     # print(node.conf)
     # print(node.child[0].conf)
     # print("end init")
-
+    for child in node.child: #clean up tree
+                child.parent = node
     current_node = node.child[0]
     # list.append(current_node)
     current_node.cost = current_node.parent.cost + np.linalg.norm(np.array(current_node.parent.conf) - np.array(current_node.conf))
@@ -174,11 +193,9 @@ def tree_traversal(node):
         print(level)
         #Move down
         if current_node.child != empty:
-            # print("down")
-            # print(current_node.conf)
-            # print(current_node.child)
-            # print(current_node.child[0].conf)
             level += 1
+            for child in current_node.child: #clean up tree
+                child.parent = current_node
             current_node = current_node.child[0]
             current_node.cost = current_node.parent.cost + np.linalg.norm(np.array(current_node.parent.conf) - np.array(current_node.conf))
             # list.append(current_node)
@@ -205,29 +222,13 @@ def tree_traversal(node):
                 # list.append(current_node)
     return
 
-
-#Self-Made Fucntion for testing ###################
-def path_smoothing(path_conf):
-    step_size = 0.05
-    path_conf_stepped = []
-    for i in range(1, len(path_conf)):
-        path_conf_stepped.append(path_conf[i-1])
-        diff = np.array(path_conf[i]) - np.array(path_conf[i-1])
-        num_step = abs(math.ceil(math.dist(path_conf[i], path_conf[i-1]) / step_size)) #divide distance by step size, round up
-        stepper = diff / np.linalg.norm(diff) * step_size
-    
-        for j in range(0, num_step):
-            path_conf_stepped.append(path_conf[i-1] + (stepper * j))
-    path_conf_stepped.append(path_conf[len(path_conf)-1])
-    return path_conf_stepped 
-####################################################
-
 def RRT_star():
     #Implement full RRT Star algorithm
-    max_iterations = 1000
+    max_iterations = 700
     num_iterations = 0
     goal_node = RRT_Node(goal_conf)
-    
+    collision_runtime = run_time(0)
+
     #Initialize Tree
     T = []
     T.append(RRT_Node(start_conf))
@@ -246,7 +247,7 @@ def RRT_star():
         q_nearest = find_nearest(q_rand, T) #find nearest node to random node
         
         #Collision Free Path?
-        collision_flag, cost = steer_to(q_rand, q_nearest)
+        collision_flag, cost = steer_to(q_rand, q_nearest, collision_runtime)
         
 
         #If path is valid
@@ -254,7 +255,7 @@ def RRT_star():
             
             #Find near parents
             Xnear = near(q_rand, T) #nodes within radius
-            min_parent = choose_parent(q_rand, Xnear)
+            min_parent = choose_parent(q_rand, Xnear, collision_runtime)
             
             if min_parent is not None:
                 q_rand.parent = min_parent
@@ -275,7 +276,7 @@ def RRT_star():
                     print("goal in tree")
             
             #Rewire Tree
-            rewire(Xnear, q_rand)
+            rewire(Xnear, q_rand, collision_runtime)
 
         # else: #no path from rand node to nearest node
         #     goal_flag = 0
@@ -291,23 +292,22 @@ def RRT_star():
     path_conf = []
     q_path = goal_node
 
-    this becomes infinite loop for some reason
-    while (q_path.conf != T[0].conf):
+    while (q_path != T[0]):
         path_conf.append(q_path.conf)
         q_path = q_path.parent
     path_conf.append(T[0].conf)
     path_conf.reverse()
     # print("Number of iterations (RRT):")
     # print(num_iterations)
-    print(path_conf)
+    path_cost = 0
+    for i in range(len(path_conf)-1):
+        diff = np.array(path_conf[i+1]) - np.array(path_conf[i])
+        cost = np.linalg.norm(diff)
+        path_cost += cost
+    print(f'The cost of this path is: {path_cost}')
+    print(f'The runtime for the collision checker is {collision_runtime.t}')
     path_conf = path_smoothing(path_conf)
     return path_conf
-
-# def get_position_from_conf(conf):
-#     set_joint_positions(ur5, UR5_JOINT_INDICES, conf)
-#     return p.getLinkState(ur5, p.getNumJoints(ur5) - 1)[:2][0]
-###############################################################################
-#your implementation ends here
 
 if __name__ == "__main__":
     # set up simulator
@@ -338,6 +338,8 @@ if __name__ == "__main__":
     goal_marker = draw_sphere_marker(position=goal_position, radius=0.02, color=[1, 0, 0, 1])
     set_joint_positions(ur5, UR5_JOINT_INDICES, start_conf)
 
+    #Collision Runtime
+    
     
 	# place holder to save the solution path
     path_conf = None
@@ -361,17 +363,3 @@ if __name__ == "__main__":
                 set_joint_positions(ur5, UR5_JOINT_INDICES, q)
                 time.sleep(.051)
             time.sleep(0.5)
-        # while True:
-        #     q_prev = None
-        #     for q in path_conf:
-        #         set_joint_positions(ur5, UR5_JOINT_INDICES, q)
-        #         print(p.getLinkState(ur5, p.getNumJoints(ur5)-1)[:2][0])
-        #         draw_sphere_marker(position=p.getLinkState(ur5, p.getNumJoints(ur5)-1)[:2][0], radius=0.01,
-        #                            color=[0,1,0,1])
-                
-        #         if q_prev is not None:
-        #             draw_path = steer_to_get_path(q_prev, q)
-        #             for q_small in draw_path:
-        #                 draw_sphere_marker(position=get_position_from_conf(q_small), radius=0.005, color=[1,1,0,0.5])
-        #         q_prev = q
-        #         time.sleep(0.5)
