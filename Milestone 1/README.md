@@ -1,1 +1,15 @@
-We will put the necessary information about how to use the files here.
+List of Files and their purpose
+
+Collision Utils.py
+    collision checker for UR5
+
+data_gen.py
+    File used to generate data for neural net training. (Will create the data and save it)
+
+data_testing.py
+    Used for testing syntax, etc. can be ignored
+testing_file.py
+    Used for testing syntax, etc. can be ignored
+
+UR5_RRTstar.py
+    Implements RRT* on UR5 and environment. Outputs the time spent in collision checker, and cost of path. Will rerun until it finds a path (1000 iterations per run)
