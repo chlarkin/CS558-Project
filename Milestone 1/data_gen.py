@@ -39,43 +39,93 @@ p.resetDebugVisualizerCamera(cameraDistance=1.400, cameraYaw=58.000, cameraPitch
 plane = p.loadURDF("plane.urdf")
 ur5 = p.loadURDF('assets/ur5/ur5.urdf', basePosition=[0, 0, 0.02], useFixedBase=True)
 
-#Choose Environment
-obstacle1 = p.loadURDF('assets/block.urdf',
-                           basePosition=[1/4, 0, 1/2],
-                           useFixedBase=True)
-obstacle2 = p.loadURDF('assets/block.urdf',
-                           basePosition=[2/4, 0, 2/3],
-                           useFixedBase=True)
-obstacles = [plane, obstacle1, obstacle2]
+# #Choose Environment
+# obstacle1 = p.loadURDF('assets/block.urdf',
+#                            basePosition=[1/4, 0, 1/2],
+#                            useFixedBase=True)
+# obstacle2 = p.loadURDF('assets/block.urdf',
+#                            basePosition=[2/4, 0, 2/3],
+#                            useFixedBase=True)
+# obstacles = [plane, obstacle1, obstacle2]
 
-# Initialize Collision Checker
-collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,
-                    attachments=[], self_collisions=True,
-                    disabled_collisions=set())
+def create_environment(index):
+    obstacle_positions = []
+    for _ in range(2):  # Number of obstacles (assuming 2 obstacles per environment)
+        # Generate random positions for obstacles within a predefined range
+        obstacle_pos = [np.random.uniform(-1, 1), np.random.uniform(-1, 1), np.random.uniform(0, 1) + index]
+        obstacle_positions.append(obstacle_pos)
 
+    obstacles = []
+    for obstacle_pos in obstacle_positions:
+        obstacle = p.loadURDF('assets/block.urdf', basePosition=obstacle_pos, useFixedBase=True)
+        obstacles.append(obstacle)
+    
+    return obstacles
+
+num_env = 10
 N = 100 #Number of Data Points to save
 
-q_list = []
-c_list = []
-for i in range(N):
-    # Generate random congifuration
-    q = sample_conf()
-    q_list.append(q)
+# Loop through environments
+for env_index in range(num_env):
+    obstacles = create_environment(env_index)
+    environment_name = f"environment_{env_index}"
+    data_path = f"data/{environment_name}.txt"
+    
+    # Initialize Collision Checker
+    collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,
+                                     attachments=[], self_collisions=True,
+                                     disabled_collisions=set())
 
-    # Set the robot to the start configuration
-    set_joint_positions(ur5, UR5_JOINT_INDICES, q)
-    time.sleep(.1)
+    q_list = []
+    c_list = []
+    
+    for i in range(N):
+        # Generate random configuration
+        q = sample_conf()
+        q_list.append(q)
 
-    # Check for collision
-    c_list.append(collision_fn(q)) #True if collision
+        # Set the robot to the start configuration
+        set_joint_positions(ur5, UR5_JOINT_INDICES, q)
+        time.sleep(.1)
 
-    # Save data in correct format for training NN (Joint angles, obstacle locations, collision_flag)
-data = zip(q_list, c_list)
-zipped_data = list(data)
-# for i in range(len(zipped_data)):
-#     print(zipped_data[i])
+        # Check for collision
+        c_list.append(collision_fn(q)) #True if collision
+
+    # Save data to file
+    with open(data_path, 'w') as file:
+        for q, c in zip(q_list, c_list):
+            file.write(f"{q[0]}, {q[1]}, {q[2]}, {c}\n")
+
+# Close the simulation
+p.disconnect()
+# # Initialize Collision Checker
+# collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,
+#                     attachments=[], self_collisions=True,
+#                     disabled_collisions=set())
 
 
-# Need to figure out how to save the (zipped_data) to a file that can be accessed
-# Need to create more environments and save the data
+
+# q_list = []
+# c_list = []
+# for i in range(N):
+#     # Generate random congifuration
+#     q = sample_conf()
+#     q_list.append(q)
+
+#     # Set the robot to the start configuration
+#     set_joint_positions(ur5, UR5_JOINT_INDICES, q)
+#     time.sleep(.1)
+
+#     # Check for collision
+#     c_list.append(collision_fn(q)) #True if collision
+
+#     # Save data in correct format for training NN (Joint angles, obstacle locations, collision_flag)
+# data = zip(q_list, c_list)
+# zipped_data = list(data)
+# # for i in range(len(zipped_data)):
+# #     print(zipped_data[i])
+
+
+# # Need to figure out how to save the (zipped_data) to a file that can be accessed
+# # Need to create more environments and save the data
 
