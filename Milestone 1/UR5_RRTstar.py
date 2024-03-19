@@ -55,16 +55,18 @@ class RRT_Node:
         self.child = []
 
     def set_parent(self, parent):
-        self.parent = parent
+        if self.conf != parent.conf:
+            self.parent = parent
 
     def add_child(self, child):
-        self.child.append(child)
+        if child not in self.child:
+            self.child.append(child)
 
     def set_cost(self, cost):
         self.cost = cost
 
 def sample_conf():
-    if random.randint(0, 100) > 95: #Goal config 5% of the time
+    if random.randint(0, 100) > 98: #Goal config 2% of the time
         return goal_conf #Goal
     else:
         sample_joint1 = np.random.uniform(-2*math.pi,2*math.pi)
@@ -114,7 +116,7 @@ def steer_to(rand_node, nearest_node, collision_runtime):
 def near(q_rand, T):
 
     # Use this value of gamma
-    GAMMA = 50
+    GAMMA = 5
 
     # your code here
     v = len(T)
@@ -122,6 +124,7 @@ def near(q_rand, T):
     Xnear = []
 
     radius = GAMMA * (math.log(abs(v)) / abs(v)) ** (1/n) #calculating radius
+    # print(radius)
 
     for node in T:
         norm_node = np.linalg.norm(np.array(node.conf))
@@ -161,15 +164,13 @@ def rewire(Xnear, rand_node, collision_runtime):
         if flag != 1:
             new_cost += rand_node.cost
             if new_cost < current_cost:
-                node.parent = rand_node
+                node.parent.child.remove(node) #Old parent no longer has this as a child
+                node.set_parent(rand_node) #New parent assigned
+                rand_node.add_child(node) #Child added
                 node.cost = new_cost
                 if rand_node.conf != goal_conf:
                     rand_node.add_child(node)
-                if rand_node in node.child:
-                    node.child.remove(rand_node)
                 tree_traversal(node)
-                
-
     return
 
 def tree_traversal(node):
@@ -178,24 +179,23 @@ def tree_traversal(node):
     # list = []
     if node.child == empty:
         return
-    
-    # print("init")
-    # print(node.conf)
-    # print(node.child[0].conf)
-    # print("end init")
-    for child in node.child: #clean up tree
-                child.parent = node
     current_node = node.child[0]
     # list.append(current_node)
     current_node.cost = current_node.parent.cost + np.linalg.norm(np.array(current_node.parent.conf) - np.array(current_node.conf))
     level = 1
     while current_node != node:
-        print(level)
+        # print(level)
+        # print(current_node.conf)
+        # print(current_node.child)
+        # print(current_node.parent.conf)
+        # print(current_node.parent.child)
+        if level < 0:
+            print(current_node.conf)
+            break
         #Move down
         if current_node.child != empty:
+            # print("down")
             level += 1
-            for child in current_node.child: #clean up tree
-                child.parent = current_node
             current_node = current_node.child[0]
             current_node.cost = current_node.parent.cost + np.linalg.norm(np.array(current_node.parent.conf) - np.array(current_node.conf))
             # list.append(current_node)
@@ -224,10 +224,12 @@ def tree_traversal(node):
 
 def RRT_star():
     #Implement full RRT Star algorithm
-    max_iterations = 700
+    max_iterations = 1000
     num_iterations = 0
     goal_node = RRT_Node(goal_conf)
     collision_runtime = run_time(0)
+    goal_flag = False
+    assist_nodes = []
 
     #Initialize Tree
     T = []
@@ -242,14 +244,12 @@ def RRT_star():
         if q_rand.conf == goal_node.conf:
             q_rand = goal_node #This is for checking if goal node is in T later
         
-        
         #Find Nearest Node to Random Node
         q_nearest = find_nearest(q_rand, T) #find nearest node to random node
         
         #Collision Free Path?
         collision_flag, cost = steer_to(q_rand, q_nearest, collision_runtime)
         
-
         #If path is valid
         if (collision_flag != 1):
             
@@ -258,31 +258,35 @@ def RRT_star():
             min_parent = choose_parent(q_rand, Xnear, collision_runtime)
             
             if min_parent is not None:
-                q_rand.parent = min_parent
+                q_rand.set_parent(min_parent)
                 q_rand.cost = min_parent.cost + np.linalg.norm(np.array(q_rand.conf) - np.array(min_parent.conf))
-                min_parent.add_child(q_rand)
             else:
-                q_rand.parent = q_nearest
+                q_rand.set_parent(q_nearest)
                 q_rand.cost = q_nearest.cost + cost
-                q_nearest.add_child(q_rand)
             
-            #Add to tree if not already in tree
-            if q_rand in T:
-                pass
-            else:
+            q_rand.parent.add_child(q_rand)
+            
+            #Add to tree if not already in tree (Would only happen if its goal node)
+            if q_rand not in T:
                 T.append(q_rand)
-                print(num_iterations)
-                if q_rand.conf == goal_conf:
-                    print("goal in tree")
             
+            
+            if q_rand.conf == goal_conf:
+                print(num_iterations)
+                goal_flag = True
+                assist_nodes.append(q_rand.parent) 
+                
             #Rewire Tree
             rewire(Xnear, q_rand, collision_runtime)
-
-        # else: #no path from rand node to nearest node
-        #     goal_flag = 0
-
-    if goal_node in T:
-        pass
+    total_cost = []
+    if goal_flag:
+        for assist in assist_nodes:
+            assist_cost = assist.cost
+            goal_cost = np.linalg.norm(np.array(goal_node.conf) - np.array(assist.conf))
+            total_cost.append(assist_cost + goal_cost)
+            # add code to sort through this list
+        min_assist = assist_nodes[total_cost.index(min(total_cost))]
+        goal_node.set_parent(min_assist)
     else:
         print(f"Goal not found in {max_iterations} iterations")
         path_conf = []
@@ -291,10 +295,14 @@ def RRT_star():
     #Creating Path Config
     path_conf = []
     q_path = goal_node
-
-    while (q_path != T[0]):
+    counter = 0
+    while (q_path != T[0]) and (counter < 20):
+        counter += 1
         path_conf.append(q_path.conf)
         q_path = q_path.parent
+
+    if counter > 15:
+        print(path_conf)
     path_conf.append(T[0].conf)
     path_conf.reverse()
     # print("Number of iterations (RRT):")
@@ -352,9 +360,10 @@ if __name__ == "__main__":
 
     path_conf = RRT_star()
 
-    if path_conf is None:
+    while path_conf is None:
         # pause here
         input("no collision-free path is found within the time budget, finish?")
+        path_conf = RRT_star()
     else:
 
         # execute the path
