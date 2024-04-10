@@ -55,9 +55,32 @@ def create_environment(index):
     
     return obstacles
 
-
+def create_complex_environment(client_id):
+    p.setGravity(0, 0, -10, physicsClientId=client_id)
+    
+    # Load the plane and robot UR5
+    p.setAdditionalSearchPath(pybullet_data.getDataPath(), physicsClientId=client_id)
+    plane_id = p.loadURDF("plane.urdf", physicsClientId=client_id)
+    robot_id = p.loadURDF("ur5.urdf", basePosition=[0, 0, 0.02], physicsClientId=client_id)
+    
+    # Create random obstacles
+    num_obstacles = 20
+    for _ in range(num_obstacles):
+        # Generate random position and size
+        pos = [np.random.uniform(-5, 5), np.random.uniform(-5, 5), np.random.uniform(0.5, 2)]
+        size = [np.random.uniform(0.1, 0.5), np.random.uniform(0.1, 0.5), np.random.uniform(0.1, 0.5)]
+        
+        # Load obstacle with random orientation
+        orientation = p.getQuaternionFromEuler([np.random.uniform(0, np.pi), np.random.uniform(0, np.pi), np.random.uniform(0, np.pi)])
+        obstacle_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=size, physicsClientId=client_id)
+        p.createMultiBody(baseMass=0, baseCollisionShapeIndex=obstacle_id, basePosition=pos, baseOrientation=orientation, physicsClientId=client_id)
+    
+    
+    return plane_id, robot_id
 # Loop through environments
-
+# Usage
+client_id = p.connect(p.GUI)  # or p.DIRECT for non-graphical version
+create_complex_environment(client_id)
 obstacles = create_environment(1)
 print(obstacles)
 

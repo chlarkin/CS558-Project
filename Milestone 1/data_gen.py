@@ -78,16 +78,23 @@ N = 1000 #Number of Data Points to save
 # Loop through environments
 for env_index in range(num_env+1):
     obstacles = create_environment(env_index)
+    obstacles2 = create_environment(env_index)
     environment_name = f"environment_{env_index}"
     data_path = f"data/{environment_name}.txt"
+    data_path2 = f"data2/{environment_name}.txt"
     
     # Initialize Collision Checker
     collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,
                                      attachments=[], self_collisions=True,
                                      disabled_collisions=set())
 
+    # Initialize Collision Checker
+    collision_fn2 = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles2,
+                                     attachments=[], self_collisions=True,
+                                     disabled_collisions=set())
     q_list = []
     c_list = []
+    c_list2 = []
     
     for i in range(N):
         # Generate random configuration
@@ -99,12 +106,18 @@ for env_index in range(num_env+1):
 
         # Check for collision
         c_list.append(collision_fn(q)) #True if collision
+        c_list2.append(collision_fn2(q))
+
 
     # Save data to file
     with open(data_path, 'w') as file:
         for q, c in zip(q_list, c_list):
             file.write(f"{q[0]}, {q[1]}, {q[2]}, {c}\n")
 
+    with open(data_path2, 'w') as file:
+        for q, c in zip(q_list, c_list2):
+            file.write(f"{q[0]}, {q[1]}, {q[2]}, {c}\n")
+            
 # Close the simulation
 p.disconnect()
 
