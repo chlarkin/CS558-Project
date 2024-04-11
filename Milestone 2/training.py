@@ -5,7 +5,7 @@ import numpy
 
 
 #Load data from milestone 1
-datapath = ".../data/..."
+data_path = ".../data/..."
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -30,7 +30,7 @@ class Net(nn.Module):
 model = Net()
 model = model.to(device)
 
-data = load_data
+data = load_data(data_path)
 data = torch.tensor(data).to(device)
 
 #TODO: Create loops for training (epochs? batch size? set data aside for testing?)
