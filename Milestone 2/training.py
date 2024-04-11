@@ -128,7 +128,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import os
-from sklearn.model_selection import train_test_split, KFold
+from sklearn.model_selection import train_test_split, KFold, StratifiedKFold
 from torch.utils.data import DataLoader, TensorDataset
 
 class Net(nn.Module):
@@ -137,8 +137,10 @@ class Net(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(3, 64),
             nn.PReLU(),
+            nn.Dropout(0.2),  # Dropout layer after the first activation
             nn.Linear(64, 32),
             nn.PReLU(),
+            nn.Dropout(0.1),  # Dropout layer after the second activation
             nn.Linear(32, 16),
             nn.PReLU(),
             nn.Linear(16, 2)
@@ -153,6 +155,7 @@ class Net(nn.Module):
                 nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
                 if layer.bias is not None:
                     layer.bias.data.fill_(0.01)
+
 
 def normalize_data(data):
     """
@@ -203,36 +206,15 @@ data_normalized = normalize_data(data)
 labels_tensor = torch.tensor(labels, dtype=torch.long)
 
 # K-Fold Cross-Validation
-kf = KFold(n_splits=5)
+#kf = KFold(n_splits=5)
+
+# Stratified K-Fold Cross-Validation
+skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
 fold_results = []
 
-for fold, (train_idx, val_idx) in enumerate(kf.split(data_normalized)):
-    print(f"Fold {fold+1}")
-    
-    # Splitting data and labels into training and validation sets for this fold
-    X_train, X_val = data_normalized[train_idx], data_normalized[val_idx]
-    y_train, y_val = labels_tensor[train_idx], labels_tensor[val_idx]
-    
-    # Convert to PyTorch tensors
-    X_train_tensor = torch.tensor(X_train, dtype=torch.float).to(device)
-    X_val_tensor = torch.tensor(X_val, dtype=torch.float).to(device)
-    
-    # DataLoader setup
-    train_dataset = TensorDataset(X_train_tensor, y_train)
-    val_dataset = TensorDataset(X_val_tensor, y_val)
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-    
-    # Model, loss, and optimizer
-    model = Net().to(device)
-    model.reset_weights()  # Reset model weights
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    
-    # Completing the training and validation loop implementation
-
 epochs = 100
-for fold, (train_idx, val_idx) in enumerate(kf.split(data_normalized)):
+for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
     print(f"Fold {fold+1}")
     
     # Preparing the data loaders
@@ -249,7 +231,7 @@ for fold, (train_idx, val_idx) in enumerate(kf.split(data_normalized)):
     model = Net().to(device)
     model.reset_weights()
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     
     # Training loop
     for epoch in range(epochs):
