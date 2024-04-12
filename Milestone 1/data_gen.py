@@ -36,7 +36,7 @@ p.resetDebugVisualizerCamera(cameraDistance=1.400, cameraYaw=58.000, cameraPitch
 
 
 # Load Objects
-plane = p.loadURDF("plane.urdf")
+# plane = p.loadURDF("plane.urdf")
 ur5 = p.loadURDF('assets/ur5/ur5.urdf', basePosition=[0, 0, 0.02], useFixedBase=True)
 
 # def create_environment(index):
@@ -75,18 +75,18 @@ ur5 = p.loadURDF('assets/ur5/ur5.urdf', basePosition=[0, 0, 0.02], useFixedBase=
 def create_environment():
     
     # Generate random positions for obstacles within a predefined range
-    obstacle_pos = [np.random.uniform(-0.5, 0.5), np.random.uniform(-0.5, 0.5), np.random.uniform(0, 0.75)]
+    obstacle_pos = [np.random.uniform(-0.5, 0.5), np.random.uniform(-0.5, 0.5), np.random.uniform(-0.75, 0.75)]
     obstacle = p.loadURDF('assets/block.urdf', basePosition=obstacle_pos, useFixedBase=True)
     
     return obstacle, obstacle_pos
 
-num_env = 200
+num_env = 400
 N = 200 #Number of Data Points to save
 
 # Loop through environments
 for env_index in range(num_env+1):
     obstacle, obstacle_pos = create_environment()
-    obstacles = [plane, obstacle]
+    obstacles = [obstacle]
     # obstacles2 = create_environment(env_index)
     environment_name = f"environment_{env_index}"
     data_path = f"Milestone 1/new_data/{environment_name}.txt"

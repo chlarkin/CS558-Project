@@ -1,5 +1,5 @@
 joint_angles = (4.219612752634889, 4.896806661472837, 1.396377999659565) #Ex. (0,0,0)
-obs_pos = (0.14167495808217268, 0.030432409444817954, 0.02157463094212886)
+obs_pos = (-0.41988915502023594, 0.038210565398139607, -0.19308474225539052)
 env = 0 #index of env (0 - 20)
 
 import pybullet as p
@@ -27,7 +27,7 @@ p.resetDebugVisualizerCamera(cameraDistance=1.400, cameraYaw=58.000, cameraPitch
 
 
 # Load Objects
-plane = p.loadURDF("plane.urdf")
+# plane = p.loadURDF("plane.urdf")
 ur5 = p.loadURDF('assets/ur5/ur5.urdf', basePosition=[0, 0, 0.02], useFixedBase=True)
 
 # def create_environment(index):
@@ -65,7 +65,7 @@ ur5 = p.loadURDF('assets/ur5/ur5.urdf', basePosition=[0, 0, 0.02], useFixedBase=
 # print(obstacles)
 
 obstacle = p.loadURDF('assets/block.urdf', basePosition=obs_pos, useFixedBase=True)
-obstacles = [plane, obstacle]
+obstacles = [obstacle]
 
 # Initialize Collision Checker
 collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,

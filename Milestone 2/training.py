@@ -255,7 +255,8 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
     model = Net().to(device)
     model.reset_weights()
     
-    criterion = nn.CrossEntropyLoss()
+    w = torch.tensor([1.0, 1.5]).to(device)
+    criterion = nn.CrossEntropyLoss(weight=w)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     
     # Training loop
