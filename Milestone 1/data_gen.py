@@ -70,14 +70,14 @@ def create_environment(index):
         obstacle = p.loadURDF('assets/block.urdf', basePosition=obstacle_pos, useFixedBase=True)
         obstacles.append(obstacle)
     
-    return obstacles
+    return obstacles, obstacle_positions
 
 num_env = 20
 N = 1000 #Number of Data Points to save
 
 # Loop through environments
 for env_index in range(num_env+1):
-    obstacles = create_environment(env_index)
+    obstacles, obs_pos = create_environment(env_index)
     # obstacles2 = create_environment(env_index)
     environment_name = f"environment_{env_index}"
     data_path = f"data/{environment_name}.txt"
@@ -93,6 +93,7 @@ for env_index in range(num_env+1):
     #                                  attachments=[], self_collisions=True,
     #                                  disabled_collisions=set())
     q_list = []
+    obs_list = []
     c_list = []
     # c_list2 = []
     
@@ -100,6 +101,7 @@ for env_index in range(num_env+1):
         # Generate random configuration
         q = sample_conf()
         q_list.append(q)
+        obs_list.append(obs_pos)
 
         # Set the robot to the start configuration
         set_joint_positions(ur5, UR5_JOINT_INDICES, q)
@@ -111,8 +113,8 @@ for env_index in range(num_env+1):
 
     # Save data to file
     with open(data_path, 'w') as file:
-        for q, c in zip(q_list, c_list):
-            file.write(f"{q[0]}, {q[1]}, {q[2]}, {c}\n")
+        for q, obs, c in zip(q_list,obs_list, c_list):
+            file.write(f"{q[0]}, {q[1]}, {q[2]}, {obs[0][0]}, {obs[0][1]}, {obs[0][2]}, {obs[1][0]}, {obs[1][1]}, {obs[1][2]}, {c}\n")
 
     # with open(data_path2, 'w') as file:
     #     for q, c in zip(q_list, c_list2):
