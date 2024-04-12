@@ -23,7 +23,7 @@ def sample_conf():
     sample_joint3 = np.random.uniform(-math.pi,math.pi)
         
     rand_conf = (sample_joint1, sample_joint2, sample_joint3)  
-    rand_conf = (0,0,0) 
+    # rand_conf = (1,.2,0) 
     return rand_conf #Random
 
 # Initialize
@@ -40,20 +40,13 @@ p.resetDebugVisualizerCamera(cameraDistance=1.400, cameraYaw=58.000, cameraPitch
 plane = p.loadURDF("plane.urdf")
 ur5 = p.loadURDF('assets/ur5/ur5.urdf', basePosition=[0, 0, 0.02], useFixedBase=True)
 
-def create_environment(index):
-    obstacle_positions = []
-    for _ in range(2):  # Number of obstacles (assuming 2 obstacles per environment)
-        # Generate random positions for obstacles within a predefined range
-        obstacle_pos = [np.random.uniform(-0.5, 0.5), np.random.uniform(-0.5, 0.5), np.random.uniform(0, 0.75)]
-        print(obstacle_pos)
-        obstacle_positions.append(obstacle_pos)
-
-    obstacles = []
-    for obstacle_pos in obstacle_positions:
-        obstacle = p.loadURDF('assets/block.urdf', basePosition=obstacle_pos, useFixedBase=True)
-        obstacles.append(obstacle)
+def create_environment():
     
-    return obstacles
+    # Generate random positions for obstacles within a predefined range
+    obstacle_pos = [np.random.uniform(-0.5, 0.5), np.random.uniform(-0.5, 0.5), np.random.uniform(0, 0.75)]
+    obstacle = p.loadURDF('assets/block.urdf', basePosition=obstacle_pos, useFixedBase=True)
+    
+    return obstacle, obstacle_pos
 
 # def create_complex_environment(client_id):
 #     p.setGravity(0, 0, -10, physicsClientId=client_id)
@@ -81,8 +74,9 @@ def create_environment(index):
 # Usage
 # client_id = p.connect(p.GUI)  # or p.DIRECT for non-graphical version
 # create_complex_environment(client_id)
-obstacles = create_environment(1)
-print(obstacles)
+obstacle, obstacle_pos = create_environment()
+obstacles = [plane, obstacle]
+# print(obstacles)
 
 # Initialize Collision Checker
 collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,
@@ -97,11 +91,16 @@ q = sample_conf()
 q_list.append(q)
 
 # Set the robot to the start configuration
-set_joint_positions(ur5, UR5_JOINT_INDICES, q)
-time.sleep(10)
 
 # Check for collision
 c_list.append(collision_fn(q)) #True if collision
+print(c_list)
+
+
+set_joint_positions(ur5, UR5_JOINT_INDICES, q)
+time.sleep(10)
+
+
 
 # Close the simulation
 p.disconnect()

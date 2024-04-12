@@ -135,7 +135,7 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(9, 64),
+            nn.Linear(6, 64),
             nn.PReLU(),
             nn.Dropout(0.1),  # Dropout layer after the first activation
             nn.Linear(64, 32),
@@ -193,12 +193,12 @@ def load_data(directory, test_filenames):
                 file_labels = []
                 for line in file:
                     parts = line.strip().split(', ')
-                    if len(parts) == 10:
+                    if len(parts) == 7:
                         # angles = [float(parts[0]), float(parts[1]), float(parts[2])]
                         # obstacle1 = [float(parts[3]), float(parts[4]), float(parts[5])]
                         # obstacle2 = [float(parts[6]), float(parts[7]), float(parts[8])]
                         combined_input = [float(part) for part in parts[:-1]]
-                        label = 1 if parts[9] == 'True' else 0
+                        label = 1 if parts[6] == 'True' else 0
                         file_data.append(combined_input)
                         file_labels.append(label)
                 
@@ -220,7 +220,8 @@ def load_data(directory, test_filenames):
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 test_filenames = ["environment_19.txt", "environment_20.txt"]
-data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/data"
+data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/new_data"
+model_path = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker"
 
 data, labels, test_data, test_labels = load_data(data_directory, test_filenames)
 data_normalized = normalize_data(data)
@@ -232,7 +233,7 @@ labels_tensor = torch.tensor(labels, dtype=torch.long)
 #kf = KFold(n_splits=5)
 
 # Stratified K-Fold Cross-Validation
-skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
 
 fold_results = []
 
@@ -253,6 +254,7 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
     # Resetting the model
     model = Net().to(device)
     model.reset_weights()
+    
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     
@@ -295,6 +297,7 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
 
     # Storing the results
     fold_results.append({'fold': fold+1, 'train_loss': train_loss, 'val_loss': val_loss, 'accuracy': accuracy})
+    torch.save(model.state_dict(), model_path)
 
 # Displaying the results for all folds
 for result in fold_results:
