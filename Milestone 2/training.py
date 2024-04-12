@@ -135,9 +135,9 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(3, 64),
+            nn.Linear(9, 64),
             nn.PReLU(),
-            nn.Dropout(0.2),  # Dropout layer after the first activation
+            nn.Dropout(0.1),  # Dropout layer after the first activation
             nn.Linear(64, 32),
             nn.PReLU(),
             nn.Dropout(0.1),  # Dropout layer after the second activation
@@ -179,27 +179,50 @@ def normalize_data(data):
     
     return normalized_data
 
-def load_data(directory):
+def load_data(directory, test_filenames):
     data = []
     labels = []
+    test_data = []
+    test_labels = []
+    
     for filename in os.listdir(directory):
         path = os.path.join(directory, filename)
         if os.path.isfile(path):
             with open(path, 'r') as file:
+                file_data = []
+                file_labels = []
                 for line in file:
                     parts = line.strip().split(', ')
-                    if len(parts) == 4:
-                        angles = [float(parts[0]), float(parts[1]), float(parts[2])]
-                        label = 1 if parts[3] == 'True' else 0
-                        data.append(angles)
-                        labels.append(label)
+                    if len(parts) == 10:
+                        # angles = [float(parts[0]), float(parts[1]), float(parts[2])]
+                        # obstacle1 = [float(parts[3]), float(parts[4]), float(parts[5])]
+                        # obstacle2 = [float(parts[6]), float(parts[7]), float(parts[8])]
+                        combined_input = [float(part) for part in parts[:-1]]
+                        label = 1 if parts[9] == 'True' else 0
+                        file_data.append(combined_input)
+                        file_labels.append(label)
+                
+                # Check if current file is designated for testing
+                if filename in test_filenames:
+                    test_data.extend(file_data)
+                    test_labels.extend(file_labels)
+                else:
+                    data.extend(file_data)
+                    labels.extend(file_labels)
+    
     data = np.array(data, dtype=np.float32)
     labels = np.array(labels, dtype=np.int64)
-    return data, labels
+    test_data = np.array(test_data, dtype=np.float32)
+    test_labels = np.array(test_labels, dtype=np.int64)
+    
+    return data, labels, test_data, test_labels
+
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+test_filenames = ["environment_19.txt", "environment_20.txt"]
 data_directory = "../Milestone 1/data"
-data, labels = load_data(data_directory)
+
+data, labels, test_data, test_labels = load_data(data_directory, test_filenames)
 data_normalized = normalize_data(data)
 
 # Convert the labels to a tensor
