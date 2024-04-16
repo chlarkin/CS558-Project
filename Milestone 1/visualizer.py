@@ -1,5 +1,5 @@
-joint_angles = (4.219612752634889, 4.896806661472837, 1.396377999659565) #Ex. (0,0,0)
-obs_pos = (-0.41988915502023594, 0.038210565398139607, -0.19308474225539052)
+joint_angles = (-6.141339  ,  4.5743155 , -2.486333   ) #Ex. (0,0,0)
+obs_pos = (0.04426698,  0.4595536,   0.31150365)
 env = 0 #index of env (0 - 20)
 
 import pybullet as p
@@ -34,21 +34,21 @@ obstacle = p.loadURDF('assets/block.urdf', basePosition=obs_pos, useFixedBase=Tr
 obstacles = [obstacle]
 
 # Initialize Collision Checker
-# collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,
-#                                     attachments=[], self_collisions=True,
-#                                     disabled_collisions=set())
+collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,
+                                    attachments=[], self_collisions=True,
+                                    disabled_collisions=set())
 
 # Generate random configuration
 q = joint_angles
-print(f"Joint Angles: {q}")
+# print(f"Joint Angles: {q}")
 
-print(p.getNumJoints(ur5))
+# print(p.getNumJoints(ur5))
 
 # Set the robot to the start configuration
 set_joint_positions(ur5, UR5_JOINT_INDICES, q)
 
 # Check for collision
-# print(f"Collision? {collision_fn(q)}") #True if collision
+print(f"Collision? {collision_fn(q)}") #True if collision
 
 # Close the simulation
 time.sleep(10)

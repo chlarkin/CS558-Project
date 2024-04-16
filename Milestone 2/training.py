@@ -239,7 +239,7 @@ skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
 
 fold_results = []
 
-epochs = 50
+epochs = 100
 for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
     print(f"Fold {fold+1}")
     
@@ -257,8 +257,8 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
     model = Net().to(device)
     model.reset_weights()
     
-    w = torch.tensor([2.0, 1.0]).to(device) #this is the weight I was using, i tried both [2.0, 1.0] and [1.0, 2.0] since Im not sure which class is in which spot
-    criterion = nn.CrossEntropyLoss(weight=w)
+    # w = torch.tensor([2.0, 1.0]).to(device) #this is the weight I was using, i tried both [2.0, 1.0] and [1.0, 2.0] since Im not sure which class is in which spot
+    criterion = nn.CrossEntropyLoss()#weight=w)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     
     # Training loop
