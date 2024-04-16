@@ -221,8 +221,8 @@ def load_data(directory, test_filenames):
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 test_filenames = ["environment_19.txt", "environment_20.txt"]
 # "C:\Users\Christopher\Documents\GitHub\CS558-Project\Milestone 1\new_data"
-data_directory = "C:/Users/Christopher/Documents/GitHub/CS558-Project/Milestone 1/new_data"
-model_path = "C:/Users/Christopher/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker"
+data_directory = "Milestone 1/new_data"
+model_path = "models/collision_checker"
 
 data, labels, test_data, test_labels = load_data(data_directory, test_filenames)
 data_normalized = normalize_data(data)
