@@ -135,15 +135,15 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(6, 64),
+            nn.Linear(6, 256),
             nn.PReLU(),
             nn.Dropout(0.1),  # Dropout layer after the first activation
-            nn.Linear(64, 32),
+            nn.Linear(256, 128),
             nn.PReLU(),
             nn.Dropout(0.1),  # Dropout layer after the second activation
-            nn.Linear(32, 16),
+            nn.Linear(128, 64),
             nn.PReLU(),
-            nn.Linear(16, 2)
+            nn.Linear(64, 2)
         )
 
     def forward(self, x):
@@ -222,8 +222,8 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f"running on {device}")
 test_filenames = ["environment_19.txt", "environment_20.txt"]
 # "C:\Users\Christopher\Documents\GitHub\CS558-Project\Milestone 1\new_data"
-data_directory = "C:/Users/Christopher/Documents/GitHub/CS558-Project/Milestone 1/new_data"
-model_path = "C:/Users/Christopher/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker"
+data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/new_data"
+model_path = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker"
 
 data, labels, test_data, test_labels = load_data(data_directory, test_filenames)
 data_normalized = normalize_data(data)
@@ -306,5 +306,3 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data, labels)):
 for result in fold_results:
     print(f"Fold {result['fold']}: Training Loss: {result['train_loss']:.4f}, "
           f"Validation Loss: {result['val_loss']:.4f}, Accuracy: {result['accuracy']:.2f}%")
-
-
