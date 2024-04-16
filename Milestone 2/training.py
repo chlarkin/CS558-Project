@@ -236,7 +236,7 @@ labels_tensor = torch.tensor(labels, dtype=torch.long)
 # Stratified K-Fold Cross-Validation
 skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
 
-fold_results = []``
+fold_results = []
 
 epochs = 50
 for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
