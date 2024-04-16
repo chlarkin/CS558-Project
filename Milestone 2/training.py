@@ -240,7 +240,7 @@ skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
 fold_results = []
 
 epochs = 50
-for fold, (train_idx, val_idx) in enumerate(skf.split(data, labels)):
+for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
     print(f"Fold {fold+1}")
     
     # Preparing the data loaders
