@@ -221,8 +221,8 @@ def load_data(directory, test_filenames):
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 test_filenames = ["environment_19.txt", "environment_20.txt"]
 # "C:\Users\Christopher\Documents\GitHub\CS558-Project\Milestone 1\new_data"
-data_directory = "Milestone 1/new_data"
-model_path = "models/collision_checker"
+data_directory = "C:/Users/Christopher/Documents/GitHub/CS558-Project/Milestone 1/new_data"
+model_path = "C:/Users/Christopher/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker"
 
 data, labels, test_data, test_labels = load_data(data_directory, test_filenames)
 data_normalized = normalize_data(data)
@@ -239,7 +239,7 @@ skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
 fold_results = []
 
 epochs = 50
-for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
+for fold, (train_idx, val_idx) in enumerate(skf.split(data, labels)):
     print(f"Fold {fold+1}")
     
     # Preparing the data loaders
@@ -256,8 +256,8 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
     model = Net().to(device)
     model.reset_weights()
     
-    # w = torch.tensor([1.0, 1.5]).to(device)
-    criterion = nn.CrossEntropyLoss()#weight=w)
+    w = torch.tensor([2.0, 0.5]).to(device)
+    criterion = nn.CrossEntropyLoss(weight=w)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     
     # Training loop

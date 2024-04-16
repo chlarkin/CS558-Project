@@ -80,11 +80,12 @@ def create_environment():
     
     return obstacle, obstacle_pos
 
-num_env = 0
-N = 500000 #Number of Data Points to save
+num_env = 500
+N = 100 #Number of Data Points to save
 
 # Loop through environments
 for env_index in range(num_env+1):
+    print(env_index)
     obstacle, obstacle_pos = create_environment()
     obstacles = [obstacle]
     # obstacles2 = create_environment(env_index)

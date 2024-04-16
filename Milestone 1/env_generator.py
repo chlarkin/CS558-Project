@@ -74,12 +74,15 @@ def create_environment():
 # Usage
 # client_id = p.connect(p.GUI)  # or p.DIRECT for non-graphical version
 # create_complex_environment(client_id)
-obstacle, obstacle_pos = create_environment()
+obstacles = []
+for i in range(0, 250):
+    obstacle, obstacle_pos = create_environment()
+    obstacles.append(obstacle)
 # obstacles = [plane, obstacle]
 # print(obstacles)
 
 # Initialize Collision Checker
-collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=[obstacle],
+collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,
                                     attachments=[], self_collisions=True,
                                     disabled_collisions=set())
 
