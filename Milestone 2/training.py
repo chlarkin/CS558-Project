@@ -193,7 +193,7 @@ def load_data(directory, test_filenames):
                 file_labels = []
                 for line in file:
                     parts = line.strip().split(', ')
-                    if len(parts) == 7:
+                    if len(parts) == 7: #Changed this to match [q, obs, c]
                         # angles = [float(parts[0]), float(parts[1]), float(parts[2])]
                         # obstacle1 = [float(parts[3]), float(parts[4]), float(parts[5])]
                         # obstacle2 = [float(parts[6]), float(parts[7]), float(parts[8])]
@@ -219,6 +219,7 @@ def load_data(directory, test_filenames):
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print(f"running on {device}")
 test_filenames = ["environment_19.txt", "environment_20.txt"]
 # "C:\Users\Christopher\Documents\GitHub\CS558-Project\Milestone 1\new_data"
 data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/new_data"
@@ -256,7 +257,7 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data, labels)):
     model = Net().to(device)
     model.reset_weights()
     
-    w = torch.tensor([2.0, 0.5]).to(device)
+    w = torch.tensor([2.0, 1.0]).to(device) #this is the weight I was using, i tried both [2.0, 1.0] and [1.0, 2.0] since Im not sure which class is in which spot
     criterion = nn.CrossEntropyLoss(weight=w)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     
