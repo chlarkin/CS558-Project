@@ -359,6 +359,7 @@ import random
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import StratifiedKFold
 import matplotlib.pyplot as plt
+from sklearn.utils.class_weight import compute_class_weight
 
 class Net(nn.Module):
     def __init__(self):
@@ -445,6 +446,11 @@ def plot_learning_curves(history):
     plt.tight_layout()
     plt.show()
 
+def calculate_class_weights(labels):
+    # 'balanced' mode makes the function return the inverse of the class frequencies
+    class_weights = compute_class_weight(class_weight='balanced', classes=np.unique(labels), y=labels)
+    return torch.tensor(class_weights, dtype=torch.float)
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 data_directory = "../Milestone 1/new_data"
 model_path = "models/collision_checker"
@@ -454,6 +460,9 @@ labels_tensor = torch.tensor(labels, dtype=torch.long)
 skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 fold_results = []
 epochs = 50
+unique_classes = np.unique(labels)
+class_weights = compute_class_weight('balanced', classes=unique_classes, y=labels)
+class_weights_tensor = torch.tensor(class_weights, dtype=torch.float).to(device)
 
 for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
     print(f"Fold {fold+1}")
@@ -468,7 +477,8 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
 
     model = Net().to(device)
     model.reset_weights()
-    criterion = nn.CrossEntropyLoss()
+        
+    criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
 
     history = {'train_loss': [], 'val_loss': [], 'train_accuracy': [], 'val_accuracy': [], 'collision_accuracy': []}
