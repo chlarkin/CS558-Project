@@ -135,15 +135,15 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(6, 64),
+            nn.Linear(6, 256),
             nn.PReLU(),
             nn.Dropout(0.1),  # Dropout layer after the first activation
-            nn.Linear(64, 32),
+            nn.Linear(256, 128),
             nn.PReLU(),
             nn.Dropout(0.1),  # Dropout layer after the second activation
-            nn.Linear(32, 16),
+            nn.Linear(128, 64),
             nn.PReLU(),
-            nn.Linear(16, 2)
+            nn.Linear(64, 2)
         )
 
     def forward(self, x):
@@ -222,8 +222,10 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f"running on {device}")
 test_filenames = ["environment_19.txt", "environment_20.txt"]
 # "C:\Users\Christopher\Documents\GitHub\CS558-Project\Milestone 1\new_data"
+
 data_directory = "../Milestone 1/new_data"
 model_path = "models/collision_checker"
+
 
 data, labels, test_data, test_labels = load_data(data_directory, test_filenames)
 data_normalized = normalize_data(data)
@@ -239,8 +241,8 @@ skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
 
 fold_results = []
 
-epochs = 50
-for fold, (train_idx, val_idx) in enumerate(skf.split(data, labels)):
+epochs = 100
+for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
     print(f"Fold {fold+1}")
     
     # Preparing the data loaders
@@ -257,8 +259,8 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data, labels)):
     model = Net().to(device)
     model.reset_weights()
     
-    w = torch.tensor([2.0, 1.0]).to(device) #this is the weight I was using, i tried both [2.0, 1.0] and [1.0, 2.0] since Im not sure which class is in which spot
-    criterion = nn.CrossEntropyLoss(weight=w)
+    # w = torch.tensor([2.0, 1.0]).to(device) #this is the weight I was using, i tried both [2.0, 1.0] and [1.0, 2.0] since Im not sure which class is in which spot
+    criterion = nn.CrossEntropyLoss()#weight=w)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     
     # Training loop
@@ -306,5 +308,3 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data, labels)):
 for result in fold_results:
     print(f"Fold {result['fold']}: Training Loss: {result['train_loss']:.4f}, "
           f"Validation Loss: {result['val_loss']:.4f}, Accuracy: {result['accuracy']:.2f}%")
-
-
