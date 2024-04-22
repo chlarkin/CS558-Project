@@ -5,7 +5,8 @@ import torch.nn as nn
 import numpy as np
 import os
 
-class Net(nn.Module):
+#This must match the structure in training
+class Net(nn.Module): 
     def __init__(self):
         super(Net, self).__init__()
         self.net = nn.Sequential(
@@ -30,7 +31,7 @@ class Net(nn.Module):
                 if layer.bias is not None:
                     layer.bias.data.fill_(0.01)
 
-def load_data(directory, test_filenames):
+def load_test_data(directory, test_filenames):
     test_data = []
     test_labels = []
     
@@ -64,9 +65,9 @@ model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/
 
 #Load Data
 data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/new_data"
-test_filenames = ["environment_1.txt", "environment_2.txt", "environment_3.txt"]
+test_filenames = ["environment_19.txt", "environment_20.txt"]
 
-test_data, test_labels = load_data(data_directory, test_filenames)
+test_data, test_labels = load_test_data(data_directory, test_filenames)
 
 correct = 0
 total = 0
@@ -86,9 +87,9 @@ for test_input, test_output in zip(test_data, test_labels):
     else:
         total_collision_free += 1
     output = model(torch.tensor(test_input))
-    result = torch.max(output.data, 0)[1]
+    result = torch.max(output.data, 0)[1].tolist()
 
-    if result.tolist() == test_output:
+    if result == test_output:
         correct += 1
         if test_output == 1:
             correct_collision += 1
@@ -103,9 +104,8 @@ for test_input, test_output in zip(test_data, test_labels):
 # print(correct_collision, total_collision, correct_collision_free, total_collision_free, correct, total)
 print(f"\nAccuracy (When Collision occurs): {100*correct_collision/total_collision:.2f}%")
 print(f"Accuracy (When no Collision occurs): {100*correct_collision_free/total_collision_free:.2f}%")
-print(f"Overall Accuracy: {100*correct/total:.2f}")   
+print(f"Overall Accuracy: {100*correct/total:.2f}%")   
 
 print("\nHere are the first 10 cases of incorrect results:")
 for i in range(0,10):
     print(f'Joint Angles:   {incorrect_inputs[i]}       Incorrectly Said:   {incorrect_labels[i]}')
-    
