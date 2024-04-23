@@ -13,10 +13,10 @@ class Net(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(6, 256),
             nn.PReLU(),
-            nn.Dropout(0),  # Dropout layer after the first activation
+            nn.Dropout(0.1),  # Dropout layer after the first activation
             nn.Linear(256, 128),
             nn.PReLU(),
-            nn.Dropout(0),  # Dropout layer after the second activation
+            nn.Dropout(0.1),  # Dropout layer after the second activation
             nn.Linear(128, 64),
             nn.PReLU(),
             nn.Linear(64, 2)
@@ -100,7 +100,7 @@ model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/
 
 #Load Data
 data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/new_data"
-test_filenames = ["environment_19.txt", "environment_20.txt"]
+test_filenames = ["environment_19.txt", "environment_20.txt", "environment_21"]
 
 # test_data, test_labels = load_test_data(data_directory, test_filenames)
 test_data, test_labels = load_data(data_directory, 5)
