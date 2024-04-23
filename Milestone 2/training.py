@@ -452,10 +452,14 @@ def calculate_class_weights(labels):
     return torch.tensor(class_weights, dtype=torch.float)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-data_directory = "../Milestone 1/new_data"
-model_path = "models/collision_checker"
+# data_directory = "../Milestone 1/new_data"
+data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/new_data"
+# model_path = "models/collision_checker"
+model_path = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker"
 data, labels, test_data, test_labels = load_data(data_directory)
-data_normalized = normalize_data(data)
+# data_normalized = normalize_data(data)
+# for i in range(0,10):
+#     print(data[i], data_normalized[i])
 labels_tensor = torch.tensor(labels, dtype=torch.long)
 skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 fold_results = []
@@ -464,9 +468,9 @@ unique_classes = np.unique(labels)
 class_weights = compute_class_weight('balanced', classes=unique_classes, y=labels)
 class_weights_tensor = torch.tensor(class_weights, dtype=torch.float).to(device)
 
-for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
+for fold, (train_idx, val_idx) in enumerate(skf.split(data, labels)):
     print(f"Fold {fold+1}")
-    X_train, X_val = data_normalized[train_idx], data_normalized[val_idx]
+    X_train, X_val = data[train_idx], data[val_idx]
     y_train, y_val = labels_tensor[train_idx], labels_tensor[val_idx]
     X_train_tensor = torch.tensor(X_train, dtype=torch.float).to(device)
     X_val_tensor = torch.tensor(X_val, dtype=torch.float).to(device)
@@ -479,7 +483,7 @@ for fold, (train_idx, val_idx) in enumerate(skf.split(data_normalized, labels)):
     model.reset_weights()
         
     criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0001)
 
     history = {'train_loss': [], 'val_loss': [], 'train_accuracy': [], 'val_accuracy': [], 'collision_accuracy': []}
     for epoch in range(epochs):

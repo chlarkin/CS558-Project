@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import os
+import random
 
 #This must match the structure in training
 class Net(nn.Module): 
@@ -12,10 +13,10 @@ class Net(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(6, 256),
             nn.PReLU(),
-            nn.Dropout(0.1),  # Dropout layer after the first activation
+            nn.Dropout(0),  # Dropout layer after the first activation
             nn.Linear(256, 128),
             nn.PReLU(),
-            nn.Dropout(0.1),  # Dropout layer after the second activation
+            nn.Dropout(0),  # Dropout layer after the second activation
             nn.Linear(128, 64),
             nn.PReLU(),
             nn.Linear(64, 2)
@@ -59,15 +60,51 @@ def load_test_data(directory, test_filenames):
     
     return test_data, test_labels
 
+def normalize_data(data):
+    mean = np.mean(data, axis=0)
+    std = np.std(data, axis=0)
+    
+    std[std == 0] = 1
+    return (data - mean) / std
+
+def load_data(directory, num_test_files=50):
+    all_filenames = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    test_filenames = random.sample(all_filenames, num_test_files)
+    data = []
+    labels = []
+    test_data = []
+    test_labels = []
+    for filename in all_filenames:
+        path = os.path.join(directory, filename)
+        with open(path, 'r') as file:
+            file_data = []
+            file_labels = []
+            for line in file:
+                parts = line.strip().split(', ')
+                if len(parts) == 7:
+                    combined_input = [float(part) for part in parts[:-1]]
+                    label = 1 if parts[6] == 'True' else 0
+                    file_data.append(combined_input)
+                    file_labels.append(label)
+            if filename in test_filenames:
+                test_data.extend(file_data)
+                test_labels.extend(file_labels)
+            else:
+                data.extend(file_data)
+                labels.extend(file_labels)
+    return np.array(test_data, dtype=np.float32), np.array(test_labels, dtype=np.int64)
+
 #Get Model
 model = Net()
-model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker"))
+model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker_fold_1.pt"))
 
 #Load Data
 data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/new_data"
 test_filenames = ["environment_19.txt", "environment_20.txt"]
 
-test_data, test_labels = load_test_data(data_directory, test_filenames)
+# test_data, test_labels = load_test_data(data_directory, test_filenames)
+test_data, test_labels = load_data(data_directory, 5)
+# test_data = normalize_data(test_data)
 
 correct = 0
 total = 0
