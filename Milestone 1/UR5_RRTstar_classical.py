@@ -106,7 +106,7 @@ def steer_to(rand_node, nearest_node, collision_runtime):
             endtime = time.time()
             collision_runtime.add_t(endtime-starttime)
             collision_flag = 1 #There is collision
-            break
+            return collision_flag, cost
     
     endtime = time.time()
     collision_runtime.add_t(endtime-starttime)    
@@ -328,7 +328,7 @@ if __name__ == "__main__":
     p.resetDebugVisualizerCamera(cameraDistance=1.400, cameraYaw=58.000, cameraPitch=-42.200, cameraTargetPosition=(0.0, 0.0, 0.0))
 
     # load objects
-    plane = p.loadURDF("plane.urdf")
+    # plane = p.loadURDF("plane.urdf")
     ur5 = p.loadURDF('assets/ur5/ur5.urdf', basePosition=[0, 0, 0.02], useFixedBase=True)
     obstacle1 = p.loadURDF('assets/block.urdf',
                            basePosition=[1/4, 0, 1/2],
@@ -336,7 +336,7 @@ if __name__ == "__main__":
     obstacle2 = p.loadURDF('assets/block.urdf',
                            basePosition=[2/4, 0, 2/3],
                            useFixedBase=True)
-    obstacles = [plane, obstacle1, obstacle2]
+    obstacles = [obstacle1, obstacle2]
     
     # start and goal
     start_conf = (-0.813358794499552, -0.37120422397572495, -0.754454729356351)

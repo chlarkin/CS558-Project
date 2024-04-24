@@ -97,6 +97,18 @@ for i in range(N):
 print(f"Accuracy = {100 * count/N:.02f}")
 
 
+N = 10
+v = torch.zeros([N+1, 6])
+v[N,:3] = torch.tensor([1,1,1])
+for i in range(0, N):
+    v[i,:3] = torch.tensor([0,0,0]) + (0.1 * i)
+v[:,3:] = torch.tensor([.75,.75,.75])
 
-input = torch.tensor([-0.8134, -0.3712, -0.7545,  0.2500,  0.0000,  0.5000])
-print(model(input))
+output= model(v)
+print(output)
+result = torch.max(output.data, 1)[1].tolist()
+if 1 in result:
+    print(True)
+else:
+    print(False)
+print(result)

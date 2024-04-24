@@ -125,11 +125,3 @@ print("\nHere are 10 random cases of incorrect results:")
 for i in range(0,10):
     index = random.randint(0, len(incorrect_inputs))
     print(f'Joint Angles:   {incorrect_inputs[index]}       Incorrectly Said:   {incorrect_labels[index]}')
-
-
-obs = [.55,0,.5]
-
-model.add_obs_pos(obs)
-model.add_obs_pos(obs)
-
-print(model.obs_pos)

@@ -120,51 +120,35 @@ def find_nearest(rand_node, node_list):
 
 def steer_to(rand_node, nearest_node, collision_runtime, model): 
     collision_flag = 0
-    step_size = 0.05
+    step_size = 0.1
     diff = np.array(rand_node.conf) - np.array(nearest_node.conf)
     cost = np.linalg.norm(diff)
     if cost == 0:
         return 0, cost
     num_step = abs(math.ceil(math.dist(rand_node.conf, nearest_node.conf) / step_size)) #divide distance by step size, round up
     stepper = diff / cost * step_size
-    v = np.zeros([num_step+1, 3])
-    v[num_step, :] = rand_node.conf
+    
+    #NN implementation starts here
+    v = torch.zeros([num_step+1, 6])
+    v[num_step, :3] = torch.tensor(rand_node.conf)
         
     for i in range(0, num_step):
-        v[i,:] = nearest_node.conf + (stepper * i)
+        v[i,:3] = torch.tensor(nearest_node.conf) + (stepper * i)
     
-    #Use NN to check collisions
-    # starttime = time.time()
-    
-    # v = torch.tensor(v)
-    # output = model(v).tolist()
-    # endtime = time.time()
-    # collision_runtime.add_t(endtime-starttime)
-    # for i in output:
-    #     starttime = time.time()
-    #     if i == 1:
-    #         collision_flag = 1
-    #         endtime = time.time()
-    #         collision_runtime.add_t(endtime-starttime)
-    #         break
-    #     endtime = time.time()
-    #     collision_runtime.add_t(endtime-starttime)
+    starttime = time.time()
     for o in model.obs_pos:
-        for q in v.tolist():
-            starttime = time.time()
-            input = torch.tensor([q[0], q[1], q[2], o[0], o[1], o[2]])
-            # print(input)
-            output = model(input)
-            result = torch.max(output.data, 0)[1].tolist()
-            if (result): #Collision
-                endtime = time.time()
-                collision_runtime.add_t(endtime-starttime)
-                
-                collision_flag = 1 #There is collision
-                return collision_flag, cost
+        v[:,3:] = torch.tensor(o)
+        output = model(v)
+        result = torch.max(output.data, 1)[1].tolist()
+        if 1 in result: #Collision
             endtime = time.time()
             collision_runtime.add_t(endtime-starttime)
-    
+            
+            collision_flag = 1 #There is collision
+            return collision_flag, cost
+            
+    endtime = time.time()
+    collision_runtime.add_t(endtime-starttime)
     return collision_flag, cost
 
 def near(q_rand, T):
@@ -291,7 +275,8 @@ def RRT_star(model):
     T[0].cost = 0 #Start goal
 
     for i in range(1, max_iterations):
-        print(i)
+        if i % 100 == 0:
+            print(i)
         num_iterations += 1
         #Sample Configuration
         q_rand = sample_conf() #generate random configuration
@@ -327,7 +312,7 @@ def RRT_star(model):
             
             
             if q_rand.conf == goal_conf:
-                print(num_iterations)
+                print("GOAL FOUND!!!!!!!!!!!")
                 goal_flag = True
                 assist_nodes.append(q_rand.parent) 
                 
@@ -344,6 +329,7 @@ def RRT_star(model):
         goal_node.set_parent(min_assist)
     else:
         print(f"Goal not found in {max_iterations} iterations")
+        print(f'The runtime for the collision checker is {collision_runtime.t}')
         path_conf = []
         return None
     
@@ -427,7 +413,7 @@ if __name__ == "__main__":
     while path_conf is None:
         # pause here
         input("no collision-free path is found within the time budget, finish?")
-        path_conf = RRT_star()
+        path_conf = RRT_star(model)
     else:
 
         # execute the path
