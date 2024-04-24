@@ -62,7 +62,6 @@ for env_index in range(num_env+1):
                                      attachments=[], self_collisions=True,
                                      disabled_collisions=set())
 
-    
     q_list = []
     obs_list = []
     c_list = []
@@ -83,7 +82,6 @@ for env_index in range(num_env+1):
     with open(data_path, 'w') as file:
         for q, obs, c in zip(q_list,obs_list, c_list):
             file.write(f"{q[0]}, {q[1]}, {q[2]}, {obs[0]}, {obs[1]}, {obs[2]}, {c}\n")
-
 
 # Close the simulation
 p.disconnect()

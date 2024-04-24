@@ -21,6 +21,7 @@ class Net(nn.Module):
             nn.PReLU(),
             nn.Linear(64, 2)
         )
+        self.obs_pos = []
 
     def forward(self, x):
         return self.net(x)
@@ -31,6 +32,8 @@ class Net(nn.Module):
                 nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
                 if layer.bias is not None:
                     layer.bias.data.fill_(0.01)
+    def add_obs_pos(self, obs_pos):
+        self.obs_pos.append(obs_pos)
 
 def normalize_data(data):
     mean = np.mean(data, axis=0)
@@ -75,7 +78,7 @@ data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/data
 # test_filenames = ["environment_19.txt", "environment_20.txt", "environment_21"]
 
 # test_data, test_labels = load_test_data(data_directory, test_filenames)
-test_data, test_labels = load_data(data_directory, 25)
+test_data, test_labels = load_data(data_directory, 1)
 # test_data = normalize_data(test_data)
 
 correct = 0
@@ -119,3 +122,11 @@ print("\nHere are 10 random cases of incorrect results:")
 for i in range(0,10):
     index = random.randint(0, len(incorrect_inputs))
     print(f'Joint Angles:   {incorrect_inputs[index]}       Incorrectly Said:   {incorrect_labels[index]}')
+
+
+obs = [.55,0,.5]
+
+model.add_obs_pos(obs)
+model.add_obs_pos(obs)
+
+print(model.obs_pos)

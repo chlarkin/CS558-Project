@@ -77,7 +77,7 @@ p.disconnect()
 #Calculate Result
 input = torch.tensor([q[0], q[1], q[2], o[0], o[1], o[2]])
 output = model(input)
-result = torch.max(output.data, 0)[1].tolist()
+result = torch.max(output.data, 0)[1].tolist() 
 
 # #Display Result
 if correct == 1:
@@ -98,3 +98,5 @@ print(f"Accuracy = {100 * count/N:.02f}")
 
 
 
+input = torch.tensor([-0.8134, -0.3712, -0.7545,  0.2500,  0.0000,  0.5000])
+print(model(input))
