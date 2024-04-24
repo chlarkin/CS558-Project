@@ -453,9 +453,9 @@ def calculate_class_weights(labels):
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # data_directory = "../Milestone 1/new_data"
-data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/new_data"
+data_directory = "../Milestone 1/new_data"
 # model_path = "models/collision_checker"
-model_path = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker"
+model_path = "../Milestone 2/models/collision_checker"
 data, labels, test_data, test_labels = load_data(data_directory)
 # data_normalized = normalize_data(data)
 # for i in range(0,10):

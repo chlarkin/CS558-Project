@@ -72,10 +72,13 @@ def load_data(directory, num_test_files=50):
 #Get Model
 model = Net()
 model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker_93.pt"))
+#model.load_state_dict(torch.load("../Milestone 2/models/collision_checker_fold_1.pt"))
 
 #Load Data
 data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/data/collision_free_data"
 # test_filenames = ["environment_19.txt", "environment_20.txt", "environment_21"]
+#data_directory = "../Milestone 1/new_data"
+test_filenames = ["environment_19.txt", "environment_20.txt", "environment_21"]
 
 # test_data, test_labels = load_test_data(data_directory, test_filenames)
 test_data, test_labels = load_data(data_directory, 1)
