@@ -46,7 +46,7 @@ def create_environment():
     
     return obstacle, obstacle_pos
 
-num_env = 25
+num_env = 250
 N = 10000 #Number of Data Points to save
 
 # Loop through environments
@@ -55,7 +55,7 @@ for env_index in range(num_env+1):
     obstacle, obstacle_pos = create_environment()
     obstacles = [obstacle]
     environment_name = f"environment_{env_index}"
-    data_path = f"Milestone 1/data/collision_free_data/{environment_name}.txt"
+    data_path = f"Milestone 1/data/data/{environment_name}.txt"
     
     # Initialize Collision Checker
     collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,
@@ -66,7 +66,6 @@ for env_index in range(num_env+1):
     q_list = []
     obs_list = []
     c_list = []
-    # c_list2 = []
     
     for i in range(N):
         # Generate random configuration
@@ -83,8 +82,7 @@ for env_index in range(num_env+1):
     # Save data to file
     with open(data_path, 'w') as file:
         for q, obs, c in zip(q_list,obs_list, c_list):
-            if c == False:
-                file.write(f"{q[0]}, {q[1]}, {q[2]}, {obs[0]}, {obs[1]}, {obs[2]}, {c}\n")
+            file.write(f"{q[0]}, {q[1]}, {q[2]}, {obs[0]}, {obs[1]}, {obs[2]}, {c}\n")
 
 
 # Close the simulation
