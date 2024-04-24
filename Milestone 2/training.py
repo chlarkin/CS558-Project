@@ -367,10 +367,10 @@ class Net(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(6, 256),
             nn.PReLU(),
-            nn.Dropout(0.1),
+            nn.Dropout(0),
             nn.Linear(256, 128),
             nn.PReLU(),
-            nn.Dropout(0.1),
+            nn.Dropout(0),
             nn.Linear(128, 64),
             nn.PReLU(),
             nn.Linear(64, 2)
