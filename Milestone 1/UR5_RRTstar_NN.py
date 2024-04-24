@@ -34,7 +34,7 @@ def remove_marker(marker_id):
 
 #Self-Made Fucntion for testing ###################
 def path_smoothing(path_conf):
-    step_size = 0.05
+    step_size = 0.2
     path_conf_stepped = []
     for i in range(1, len(path_conf)):
         path_conf_stepped.append(path_conf[i-1])
@@ -55,14 +55,15 @@ class Net(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(6, 256),
             nn.PReLU(),
-            nn.Dropout(0),  # Dropout layer after the first activation
+            nn.Dropout(0.1),  # Dropout layer after the first activation
             nn.Linear(256, 128),
             nn.PReLU(),
-            nn.Dropout(0),  # Dropout layer after the second activation
+            nn.Dropout(0.1),  # Dropout layer after the second activation
             nn.Linear(128, 64),
             nn.PReLU(),
             nn.Linear(64, 2)
         )
+        self.obs_pos = []   #for collision checker
 
     def forward(self, x):
         return self.net(x)
@@ -73,6 +74,8 @@ class Net(nn.Module):
                 nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
                 if layer.bias is not None:
                     layer.bias.data.fill_(0.01)
+    def add_obs_pos(self, obs_pos): #for collision checker
+        self.obs_pos.append(obs_pos)
 
 class run_time:
     def __init__(self, t):
@@ -118,7 +121,6 @@ def find_nearest(rand_node, node_list):
 def steer_to(rand_node, nearest_node, collision_runtime, model): 
     collision_flag = 0
     step_size = 0.05
-   
     diff = np.array(rand_node.conf) - np.array(nearest_node.conf)
     cost = np.linalg.norm(diff)
     if cost == 0:
@@ -132,32 +134,36 @@ def steer_to(rand_node, nearest_node, collision_runtime, model):
         v[i,:] = nearest_node.conf + (stepper * i)
     
     #Use NN to check collisions
-    starttime = time.time()
+    # starttime = time.time()
     
-    v = torch.tensor(v)
-    output = model(v).tolist()
-    endtime = time.time()
-    collision_runtime.add_t(endtime-starttime)
-    for i in output:
-        starttime = time.time()
-        if i == 1:
-            collision_flag = 1
+    # v = torch.tensor(v)
+    # output = model(v).tolist()
+    # endtime = time.time()
+    # collision_runtime.add_t(endtime-starttime)
+    # for i in output:
+    #     starttime = time.time()
+    #     if i == 1:
+    #         collision_flag = 1
+    #         endtime = time.time()
+    #         collision_runtime.add_t(endtime-starttime)
+    #         break
+    #     endtime = time.time()
+    #     collision_runtime.add_t(endtime-starttime)
+    for o in model.obs_pos:
+        for q in v.tolist():
+            starttime = time.time()
+            input = torch.tensor([q[0], q[1], q[2], o[0], o[1], o[2]])
+            # print(input)
+            output = model(input)
+            result = torch.max(output.data, 0)[1].tolist()
+            if (result): #Collision
+                endtime = time.time()
+                collision_runtime.add_t(endtime-starttime)
+                
+                collision_flag = 1 #There is collision
+                return collision_flag, cost
             endtime = time.time()
             collision_runtime.add_t(endtime-starttime)
-            break
-        endtime = time.time()
-        collision_runtime.add_t(endtime-starttime)
-
-    for q in v:
-        starttime = time.time()
-        if (collision_fn(q)): ### To be replaced with NN
-            endtime = time.time()
-            collision_runtime.add_t(endtime-starttime)
-            
-            collision_flag = 1 #There is collision
-            break
-        endtime = time.time()
-        collision_runtime.add_t(endtime-starttime)
     
     return collision_flag, cost
 
@@ -270,7 +276,7 @@ def tree_traversal(node):
                 # list.append(current_node)
     return
 
-def RRT_star():
+def RRT_star(model):
     #Implement full RRT Star algorithm
     max_iterations = 1000
     num_iterations = 0
@@ -279,16 +285,13 @@ def RRT_star():
     goal_flag = False
     assist_nodes = []
 
-    #Get Model
-    model = Net()
-    model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker_fold_1.pt"))
-
     #Initialize Tree
     T = []
     T.append(RRT_Node(start_conf))
     T[0].cost = 0 #Start goal
 
     for i in range(1, max_iterations):
+        print(i)
         num_iterations += 1
         #Sample Configuration
         q_rand = sample_conf() #generate random configuration
@@ -379,16 +382,28 @@ if __name__ == "__main__":
     p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, True)
     p.resetDebugVisualizerCamera(cameraDistance=1.400, cameraYaw=58.000, cameraPitch=-42.200, cameraTargetPosition=(0.0, 0.0, 0.0))
 
+
+    #define obstacle locations
+    obs1 = [1/4, 0, 1/2]
+    obs2 = [2/4, 0, 2/3]
+
+    #Load NN Collision Checker
+    #Get Model
+    model = Net()
+    model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker_93.pt"))
+    model.add_obs_pos(obs1)
+    model.add_obs_pos(obs2)
+
     # load objects
-    plane = p.loadURDF("plane.urdf")
+    # plane = p.loadURDF("plane.urdf")
     ur5 = p.loadURDF('assets/ur5/ur5.urdf', basePosition=[0, 0, 0.02], useFixedBase=True)
     obstacle1 = p.loadURDF('assets/block.urdf',
-                           basePosition=[1/4, 0, 1/2],
+                           basePosition=obs1,
                            useFixedBase=True)
     obstacle2 = p.loadURDF('assets/block.urdf',
-                           basePosition=[2/4, 0, 2/3],
+                           basePosition=obs2,
                            useFixedBase=True)
-    obstacles = [plane, obstacle1, obstacle2]
+    obstacles = [obstacle1, obstacle2]
     
     # start and goal
     start_conf = (-0.813358794499552, -0.37120422397572495, -0.754454729356351)
@@ -397,9 +412,6 @@ if __name__ == "__main__":
     goal_position = (0.35317009687423706, 0.35294029116630554, 0.7246701717376709)
     goal_marker = draw_sphere_marker(position=goal_position, radius=0.02, color=[1, 0, 0, 1])
     set_joint_positions(ur5, UR5_JOINT_INDICES, start_conf)
-
-    #Collision Runtime
-    
     
 	# place holder to save the solution path
     path_conf = None
@@ -410,7 +422,7 @@ if __name__ == "__main__":
                                        attachments=[], self_collisions=True,
                                        disabled_collisions=set())
 
-    path_conf = RRT_star()
+    path_conf = RRT_star(model)
 
     while path_conf is None:
         # pause here

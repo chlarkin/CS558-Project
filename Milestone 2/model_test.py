@@ -21,6 +21,7 @@ class Net(nn.Module):
             nn.PReLU(),
             nn.Linear(64, 2)
         )
+        self.obs_pos = []
 
     def forward(self, x):
         return self.net(x)
@@ -31,34 +32,8 @@ class Net(nn.Module):
                 nn.init.kaiming_normal_(layer.weight, nonlinearity='relu')
                 if layer.bias is not None:
                     layer.bias.data.fill_(0.01)
-
-def load_test_data(directory, test_filenames):
-    test_data = []
-    test_labels = []
-    
-    for filename in os.listdir(directory):
-        path = os.path.join(directory, filename)
-        if os.path.isfile(path):
-            with open(path, 'r') as file:
-                
-                # Check if current file is designated for testing
-                if filename in test_filenames:
-                    file_data = []
-                    file_labels = []
-                    for line in file:
-                        parts = line.strip().split(', ')
-                        if len(parts) == 7:
-                            combined_input = [float(part) for part in parts[:-1]]
-                            label = 1 if parts[6] == 'True' else 0
-                            file_data.append(combined_input)
-                            file_labels.append(label)
-                    test_data.extend(file_data)
-                    test_labels.extend(file_labels)
-    
-    test_data = np.array(test_data, dtype=np.float32)
-    test_labels = np.array(test_labels, dtype=np.int64)
-    
-    return test_data, test_labels
+    def add_obs_pos(self, obs_pos):
+        self.obs_pos.append(obs_pos)
 
 def normalize_data(data):
     mean = np.mean(data, axis=0)
@@ -89,21 +64,24 @@ def load_data(directory, num_test_files=50):
             if filename in test_filenames:
                 test_data.extend(file_data)
                 test_labels.extend(file_labels)
-            else:
-                data.extend(file_data)
-                labels.extend(file_labels)
+            # else:
+            #     data.extend(file_data)
+            #     labels.extend(file_labels)
     return np.array(test_data, dtype=np.float32), np.array(test_labels, dtype=np.int64)
 
 #Get Model
 model = Net()
+model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker_93.pt"))
 model.load_state_dict(torch.load("../Milestone 2/models/collision_checker_fold_1.pt"))
 
 #Load Data
+data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/data/collision_free_data"
+# test_filenames = ["environment_19.txt", "environment_20.txt", "environment_21"]
 data_directory = "../Milestone 1/new_data"
 test_filenames = ["environment_19.txt", "environment_20.txt", "environment_21"]
 
 # test_data, test_labels = load_test_data(data_directory, test_filenames)
-test_data, test_labels = load_data(data_directory, 5)
+test_data, test_labels = load_data(data_directory, 1)
 # test_data = normalize_data(test_data)
 
 correct = 0
@@ -139,10 +117,19 @@ for test_input, test_output in zip(test_data, test_labels):
         correct_labels.append(test_output)
 
 # print(correct_collision, total_collision, correct_collision_free, total_collision_free, correct, total)
-print(f"\nAccuracy (When Collision occurs): {100*correct_collision/total_collision:.2f}%")
+# print(f"\nAccuracy (When Collision occurs): {100*correct_collision/total_collision:.2f}%")
 print(f"Accuracy (When no Collision occurs): {100*correct_collision_free/total_collision_free:.2f}%")
 print(f"Overall Accuracy: {100*correct/total:.2f}%")   
 
-print("\nHere are the first 10 cases of incorrect results:")
+print("\nHere are 10 random cases of incorrect results:")
 for i in range(0,10):
-    print(f'Joint Angles:   {incorrect_inputs[i]}       Incorrectly Said:   {incorrect_labels[i]}')
+    index = random.randint(0, len(incorrect_inputs))
+    print(f'Joint Angles:   {incorrect_inputs[index]}       Incorrectly Said:   {incorrect_labels[index]}')
+
+
+obs = [.55,0,.5]
+
+model.add_obs_pos(obs)
+model.add_obs_pos(obs)
+
+print(model.obs_pos)
