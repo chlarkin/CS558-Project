@@ -99,17 +99,17 @@ def steer_to(rand_node, nearest_node, collision_runtime):
     
     for i in range(0, num_step):
         v[i,:] = nearest_node.conf + (stepper * i)
-    
+    starttime = time.time()
     for q in v:
-        starttime = time.time()
+        
         if (collision_fn(q)): ### To be replaced with NN
             endtime = time.time()
             collision_runtime.add_t(endtime-starttime)
-            
             collision_flag = 1 #There is collision
             break
-        endtime = time.time()
-        collision_runtime.add_t(endtime-starttime)
+    
+    endtime = time.time()
+    collision_runtime.add_t(endtime-starttime)    
     
     return collision_flag, cost
 
