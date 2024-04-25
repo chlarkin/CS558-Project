@@ -86,7 +86,7 @@ def find_nearest(rand_node, node_list):
 
 def steer_to(rand_node, nearest_node, collision_runtime): 
     collision_flag = 0
-    step_size = 0.05
+    step_size = 0.2
    
     diff = np.array(rand_node.conf) - np.array(nearest_node.conf)
     cost = np.linalg.norm(diff)

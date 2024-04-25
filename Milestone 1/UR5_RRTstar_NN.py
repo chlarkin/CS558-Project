@@ -130,14 +130,14 @@ def steer_to(rand_node, nearest_node, collision_runtime, model):
     
     #NN implementation starts here
     v = torch.zeros([num_step+1, 6])
-    v[num_step, :3] = torch.tensor(rand_node.conf)
+    v[num_step, :3] = torch.tensor(rand_node.conf, requires_grad=False)
         
     for i in range(0, num_step):
-        v[i,:3] = torch.tensor(nearest_node.conf) + (stepper * i)
+        v[i,:3] = torch.tensor(nearest_node.conf, requires_grad=False) + (stepper * i)
     
     starttime = time.time()
     for o in model.obs_pos:
-        v[:,3:] = torch.tensor(o)
+        v[:,3:] = torch.tensor(o, requires_grad=False)
         output = model(v)
         result = torch.max(output.data, 1)[1].tolist()
         if 1 in result: #Collision
@@ -353,6 +353,7 @@ def RRT_star(model):
         diff = np.array(path_conf[i+1]) - np.array(path_conf[i])
         cost = np.linalg.norm(diff)
         path_cost += cost
+    print(f"Path: {path_conf}")
     print(f'The cost of this path is: {path_cost}')
     print(f'The runtime for the collision checker is {collision_runtime.t}')
     path_conf = path_smoothing(path_conf)
@@ -409,7 +410,7 @@ if __name__ == "__main__":
                                        disabled_collisions=set())
 
     path_conf = RRT_star(model)
-
+    
     while path_conf is None:
         # pause here
         input("no collision-free path is found within the time budget, finish?")
@@ -420,5 +421,5 @@ if __name__ == "__main__":
         while True:
             for q in path_conf:
                 set_joint_positions(ur5, UR5_JOINT_INDICES, q)
-                time.sleep(.051)
+                time.sleep(.02)
             time.sleep(0.5)
