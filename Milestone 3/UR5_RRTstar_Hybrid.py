@@ -282,8 +282,8 @@ def RRT_star(model):
     T[0].cost = 0 #Start goal
 
     for i in range(1, max_iterations):
-        # if i % 100 == 0:
-        #     print(i)
+        if i % 100 == 0:
+            print(i)
         num_iterations += 1
         #Sample Configuration
         q_rand = sample_conf() #generate random configuration
@@ -317,9 +317,7 @@ def RRT_star(model):
             if q_rand not in T:
                 T.append(q_rand)
             
-            
             if q_rand.conf == goal_conf:
-                # print("GOAL FOUND!!!!!!!!!!!")
                 goal_flag = True
                 assist_nodes.append(q_rand.parent) 
                 
@@ -385,7 +383,7 @@ if __name__ == "__main__":
     #Load NN Collision Checker
     #Get Model
     model = Net()
-    model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker_93.pt"))
+    model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 3/Trained_Model/collision_checker.pt"))
     model.add_obs_pos(obs1)
     model.add_obs_pos(obs2)
     # model.add_obs_pos(obs3)
@@ -421,6 +419,15 @@ if __name__ == "__main__":
                                        attachments=[], self_collisions=True,
                                        disabled_collisions=set())
 
+    path_conf = RRT_star(model)
+    path_conf = RRT_star(model)
+    path_conf = RRT_star(model)
+    path_conf = RRT_star(model)
+    path_conf = RRT_star(model)
+    path_conf = RRT_star(model)
+    path_conf = RRT_star(model)
+    path_conf = RRT_star(model)
+    path_conf = RRT_star(model)
     path_conf = RRT_star(model)
     
     while path_conf is None:

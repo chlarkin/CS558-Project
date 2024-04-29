@@ -1,6 +1,5 @@
-joint_angles = (-0.37164053,  4.3767815,  -1.5157155   )
-obs_pos = (0.37983316, -0.2885536 ,  0.4557185 )
-env = 0 #index of env (0 - 20)
+joint_angles = (0,0,0)
+obs_pos = (0,0,0.5)
 
 import pybullet as p
 import pybullet_data
@@ -40,9 +39,6 @@ collision_fn = get_collision_fn(ur5, UR5_JOINT_INDICES, obstacles=obstacles,
 
 # Generate random configuration
 q = joint_angles
-# print(f"Joint Angles: {q}")
-
-# print(p.getNumJoints(ur5))
 
 # Set the robot to the start configuration
 set_joint_positions(ur5, UR5_JOINT_INDICES, q)

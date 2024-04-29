@@ -65,7 +65,7 @@ model.load_state_dict(torch.load("../Milestone 2/models/collision_checker_fold_1
 
 #Load Data
 data_directory = "../Milestone 1/new_data" #Path to data
-test_data, test_labels = load_data(data_directory, 500)
+test_data, test_labels = load_data(data_directory, 50)
 
 correct = 0
 total = 0
