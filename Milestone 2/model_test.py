@@ -75,13 +75,12 @@ model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/
 #model.load_state_dict(torch.load("../Milestone 2/models/collision_checker_fold_1.pt"))
 
 #Load Data
-data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/data/collision_free_data"
-# test_filenames = ["environment_19.txt", "environment_20.txt", "environment_21"]
+data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/new_data"
 #data_directory = "../Milestone 1/new_data"
 test_filenames = ["environment_19.txt", "environment_20.txt", "environment_21"]
 
 # test_data, test_labels = load_test_data(data_directory, test_filenames)
-test_data, test_labels = load_data(data_directory, 1)
+test_data, test_labels = load_data(data_directory, 500)
 # test_data = normalize_data(test_data)
 
 correct = 0
@@ -117,7 +116,7 @@ for test_input, test_output in zip(test_data, test_labels):
         correct_labels.append(test_output)
 
 # print(correct_collision, total_collision, correct_collision_free, total_collision_free, correct, total)
-# print(f"\nAccuracy (When Collision occurs): {100*correct_collision/total_collision:.2f}%")
+print(f"\nAccuracy (When Collision occurs): {100*correct_collision/total_collision:.2f}%")
 print(f"Accuracy (When no Collision occurs): {100*correct_collision_free/total_collision_free:.2f}%")
 print(f"Overall Accuracy: {100*correct/total:.2f}%")   
 

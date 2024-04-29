@@ -140,6 +140,7 @@ def steer_to(rand_node, nearest_node, collision_runtime, model):
         v[:,3:] = torch.tensor(o, requires_grad=False)
         output = model(v)
         result = torch.max(output.data, 1)[1].tolist()
+
         if 1 in result: #Collision
             endtime = time.time()
             collision_runtime.add_t(endtime-starttime)
@@ -372,14 +373,14 @@ if __name__ == "__main__":
 
     #define obstacle locations
     obs1 = [1/4, 0, 1/2]
-    obs2 = [2/4, 0, 2/3]
+    # obs2 = [2/4, 0, 2/3]
 
     #Load NN Collision Checker
     #Get Model
     model = Net()
     model.load_state_dict(torch.load("C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 2/models/collision_checker_93.pt"))
     model.add_obs_pos(obs1)
-    model.add_obs_pos(obs2)
+    # model.add_obs_pos(obs2)
 
     # load objects
     # plane = p.loadURDF("plane.urdf")
@@ -387,10 +388,11 @@ if __name__ == "__main__":
     obstacle1 = p.loadURDF('assets/block.urdf',
                            basePosition=obs1,
                            useFixedBase=True)
-    obstacle2 = p.loadURDF('assets/block.urdf',
-                           basePosition=obs2,
-                           useFixedBase=True)
-    obstacles = [obstacle1, obstacle2]
+    # obstacle2 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=obs2,
+    #                        useFixedBase=True)
+    # obstacles = [obstacle1, obstacle2]
+    obstacles = [obstacle1]
     
     # start and goal
     start_conf = (-0.813358794499552, -0.37120422397572495, -0.754454729356351)

@@ -46,8 +46,8 @@ def create_environment():
     
     return obstacle, obstacle_pos
 
-num_env = 250
-N = 10000 #Number of Data Points to save
+num_env = 25
+N = 1 #Number of Data Points to save
 
 # Loop through environments
 for env_index in range(num_env+1):
@@ -79,10 +79,10 @@ for env_index in range(num_env+1):
         c_list.append(collision_fn(q)) #True if collision
 
     # Save data to file
-    with open(data_path, 'w') as file:
-        for q, obs, c in zip(q_list,obs_list, c_list):
-            file.write(f"{q[0]}, {q[1]}, {q[2]}, {obs[0]}, {obs[1]}, {obs[2]}, {c}\n")
-
+    # with open(data_path, 'w') as file:
+    #     for q, obs, c in zip(q_list,obs_list, c_list):
+    #         file.write(f"{q[0]}, {q[1]}, {q[2]}, {obs[0]}, {obs[1]}, {obs[2]}, {c}\n")
+time.sleep(10)
 # Close the simulation
 p.disconnect()
 

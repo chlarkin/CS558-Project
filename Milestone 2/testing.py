@@ -59,8 +59,8 @@ print("Model Loaded")
 data_directory = "C:/Users/cqlar/Documents/GitHub/CS558-Project/Milestone 1/new_data"
 
 #Give joint angles (q) and obstacles (o) here
-q = [0.0,-3.14/2,3.14/2]
-o = [.55,0,.5]
+q = [-0.37164053,  4.3767815,  -1.5157155]
+o = [0.37983316, -0.2885536 ,  0.4557185]
 
 
 obstacle = p.loadURDF('assets/block.urdf', basePosition=o, useFixedBase=True)
@@ -76,8 +76,8 @@ correct = collision_fn(q) #0 = no collision; 1 = collision
 p.disconnect()
 #Calculate Result
 input = torch.tensor([q[0], q[1], q[2], o[0], o[1], o[2]])
-output = model(input)
-result = torch.max(output.data, 0)[1].tolist() 
+# output = model(input)
+# result = torch.max(output.data, 0)[1].tolist() 
 
 # #Display Result
 if correct == 1:
@@ -93,20 +93,39 @@ for i in range(N):
     result = torch.max(output.data, 0)[1].tolist()
     if result == correct:
         count += 1
-
+print(output)
 print(f"Accuracy = {100 * count/N:.02f}")
 
-
-N = 10
-v = torch.zeros([N+1, 6])
+print("\nTESTING\n")
+N = 20
+v = torch.zeros([(N+1)*2, 6])
 v[N,:3] = torch.tensor([1,1,1])
+v[(N+1)*2-1, :3] = torch.tensor([1,1,1])
+# print(v)
 for i in range(0, N):
     v[i,:3] = torch.tensor([0,0,0]) + (0.1 * i)
-v[:,3:] = torch.tensor([.75,.75,.75])
-
+    v[N+1+i, :3] = torch.tensor([0,0,0]) + (0.1 * i)
+v[:N+1,3:] = torch.tensor([.2,.2,.2])
+v[N+1:,3:] = torch.tensor([.4, .4, .4])
+# print(v)
 output= model(v)
-print(output)
-result = torch.max(output.data, 1)[1].tolist()
+# print(output)
+# print(output[:,1])
+# print(torch.abs(output[:,1]) < 4)
+# print(len(torch.abs(output[:,1]) < 4))
+result = torch.max(output.data, 1)[1]
+print(result)
+collisions = (result == 1).tolist()
+print(collisions)
+
+if True in (collisions):
+    for i in range(0, len(output)):
+        if collisions[i] == True:
+            result[i] = 4
+print(result)
+
+
+
 if 1 in result:
     print(True)
 else:

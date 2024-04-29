@@ -1,5 +1,5 @@
-joint_angles = (-.15,0,0)
-obs_pos = (.9,0,0.1)
+joint_angles = (-0.37164053,  4.3767815,  -1.5157155   )
+obs_pos = (0.37983316, -0.2885536 ,  0.4557185 )
 env = 0 #index of env (0 - 20)
 
 import pybullet as p
