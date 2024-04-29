@@ -267,7 +267,7 @@ def RRT_star():
             
             
             if q_rand.conf == goal_conf:
-                print(num_iterations)
+                # pr int(num_iterations)
                 goal_flag = True
                 assist_nodes.append(q_rand.parent) 
                 
@@ -331,8 +331,31 @@ if __name__ == "__main__":
     obstacle2 = p.loadURDF('assets/block.urdf',
                            basePosition=[2/4, 0, 2/3],
                            useFixedBase=True)
-    obstacles = [obstacle1, obstacle2]
-    
+    obstacle3 = p.loadURDF('assets/block.urdf',
+                           basePosition=[-1/4, .3, 1/3],
+                           useFixedBase=True)
+    obstacle4 = p.loadURDF('assets/block.urdf',
+                           basePosition=[2/4, .4, -2/3],
+                           useFixedBase=True)
+    obstacle5 = p.loadURDF('assets/block.urdf',
+                           basePosition=[2/4, 2/3, 0],
+                           useFixedBase=True)
+    obstacle6 = p.loadURDF('assets/block.urdf',
+                           basePosition=[0, -2/3, 0],
+                           useFixedBase=True)
+    obstacle7 = p.loadURDF('assets/block.urdf',
+                           basePosition=[-1/4, -.2, -2/3],
+                           useFixedBase=True)
+    obstacle8 = p.loadURDF('assets/block.urdf',
+                           basePosition=[-1/2, -1/2, 1/2],
+                           useFixedBase=True)
+    obstacle9 = p.loadURDF('assets/block.urdf',
+                           basePosition=[1/3, 0, 0],
+                           useFixedBase=True)
+    obstacle10 = p.loadURDF('assets/block.urdf',
+                           basePosition=[-2/5, 0, 2/4],
+                           useFixedBase=True)
+    obstacles = [obstacle1, obstacle2, obstacle3, obstacle4, obstacle5, obstacle6, obstacle7, obstacle8, obstacle9, obstacle10]
     # start and goal
     start_conf = (-0.813358794499552, -0.37120422397572495, -0.754454729356351)
     start_position = (0.3998897969722748, -0.3993956744670868, 0.6173484325408936)

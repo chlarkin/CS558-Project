@@ -134,7 +134,7 @@ def steer_to(rand_node, nearest_node, collision_runtime, model):
         
     for i in range(0, num_step):
         v[i,:3] = torch.tensor(nearest_node.conf) + (stepper * i)
-    
+
     starttime = time.time()
     for o in model.obs_pos:
         v[:,3:] = torch.tensor(o)
@@ -229,11 +229,6 @@ def tree_traversal(node):
     current_node.cost = current_node.parent.cost + np.linalg.norm(np.array(current_node.parent.conf) - np.array(current_node.conf))
     level = 1
     while current_node != node:
-        # print(level)
-        # print(current_node.conf)
-        # print(current_node.child)
-        # print(current_node.parent.conf)
-        # print(current_node.parent.child)
         if level < 0:
             print(current_node.conf)
             break
@@ -374,11 +369,17 @@ if __name__ == "__main__":
     p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, True)
     p.resetDebugVisualizerCamera(cameraDistance=1.400, cameraYaw=58.000, cameraPitch=-42.200, cameraTargetPosition=(0.0, 0.0, 0.0))
 
-
     #define obstacle locations
     obs1 = [1/4, 0, 1/2]
     obs2 = [2/4, 0, 2/3]
-    # obs3 = [-1/4, 0, -1/2]
+    obs3 = [-1/4, .3, 1/3]
+    obs4 = [2/4, .4, -2/3]
+    obs5 = [2/4, 2/3, 0]
+    obs6 = [0, -2/3, 0]
+    obs7 = [-1/4, -.2, -2/3]
+    obs8 = [-1/2, -1/2, 1/2]
+    obs9 = [1/3, 0, 0]
+    obs10 = [-2/5, 0, 2/4]
 
     #Load NN Collision Checker
     #Get Model
@@ -387,6 +388,13 @@ if __name__ == "__main__":
     model.add_obs_pos(obs1)
     model.add_obs_pos(obs2)
     # model.add_obs_pos(obs3)
+    # model.add_obs_pos(obs4)
+    # model.add_obs_pos(obs5)
+    # model.add_obs_pos(obs6)
+    # model.add_obs_pos(obs7)
+    # model.add_obs_pos(obs8)
+    # model.add_obs_pos(obs9)
+    # model.add_obs_pos(obs10)
 
     # load objects
     # plane = p.loadURDF("plane.urdf")
@@ -401,6 +409,37 @@ if __name__ == "__main__":
     #                        basePosition=obs3,
     #                        useFixedBase=True)
     obstacles = [obstacle1, obstacle2]
+    # obstacle1 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=[1/4, 0, 1/2],
+    #                        useFixedBase=True)
+    # obstacle2 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=[2/4, 0, 2/3],
+    #                        useFixedBase=True)
+    # obstacle3 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=[-1/4, .3, 1/3],
+    #                        useFixedBase=True)
+    # obstacle4 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=[2/4, .4, -2/3],
+    #                        useFixedBase=True)
+    # obstacle5 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=[2/4, 2/3, 0],
+    #                        useFixedBase=True)
+    # obstacle6 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=[0, -2/3, 0],
+    #                        useFixedBase=True)
+    # obstacle7 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=[-1/4, -.2, -2/3],
+    #                        useFixedBase=True)
+    # obstacle8 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=[-1/2, -1/2, 1/2],
+    #                        useFixedBase=True)
+    # obstacle9 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=[1/3, 0, 0],
+    #                        useFixedBase=True)
+    # obstacle10 = p.loadURDF('assets/block.urdf',
+    #                        basePosition=[-2/5, 0, 2/4],
+    #                        useFixedBase=True)
+    # obstacles = [obstacle1, obstacle2, obstacle3, obstacle4, obstacle5, obstacle6, obstacle7, obstacle8, obstacle9, obstacle10]
     
     # start and goal
     start_conf = (-0.813358794499552, -0.37120422397572495, -0.754454729356351)
